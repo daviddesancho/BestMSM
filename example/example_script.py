@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 
-import bestmsm.trajectory as besttraj
+import bestmsm.trajectory as traj
+import bestmsm.msm as msm
 
-trajala5 = besttraj.TimeSeries("ala5_32states_timeseries.dat")
-print " Filename : %s"%trajala5.filename
-print "    time between frames : %s"%trajala5.dt
-print "    length of trajectory : %g"%len(trajala5.time)
-print "    states : ",trajala5.keys
+traj_ala5 = traj.TimeSeries("ala5_32states_timeseries.dat")
+print " Filename : %s"%traj_ala5.filename
+print "    time between frames : %s"%traj_ala5.dt
+print "    length of trajectory : %g"%len(traj_ala5.time)
+print "    states : ",traj_ala5.keys
+
+msm_ala5 = msm.MSM(traj_ala5)

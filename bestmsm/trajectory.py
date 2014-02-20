@@ -54,3 +54,4 @@ class TimeSeries:
 		keys = self.keys
 		for s in self.states:
 			assign.append(keys.index(s))
+		self.assign = assign

@@ -24,30 +24,7 @@ def esort(ei,ej):
 	else:
 		return 0
 
-def calc_count(nstate,raw,keys,lag):
-	""" calculate transition count matrix """
-	count = np.zeros([nstate,nstate],int)
-	nraw = len(raw)	
-	pstate = "NULL"
-	for i in range(0,nraw-lag,lag):
-		j = i+lag
-		state_i = int(raw[i].split()[1])
-		state_j = int(raw[j].split()[1])
-		#if state_i.find("O")>=0:
-		#	continue
-		#if state_j.find("O")>=0:
-		#	continue
-		if state_i in keys:
-			idx_i = keys.index(state_i)
-		if state_j in keys:
-			idx_j = keys.index(state_j)
-		try:
-			count[idx_j][idx_i] += 1
-		except UnboundLocalError:
-			pass
-			#print " Wrong assignment"
-			#print raw[i],'-->',raw[j]
-	return count
+
 
 def find_keys(state_keys,trans,manually_remove):
 	""" eliminate dead ends """
