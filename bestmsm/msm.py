@@ -16,6 +16,7 @@ class MSM:
 		# find largest strongly connected sets
 		self.check_connect()
 		# calculate transition matrix
+		self.calc_trans()
 
 	def merge_trajs(self,trajectories):
 		new_keys = []
@@ -47,26 +48,17 @@ class MSM:
 		""" check connectivity of rate matrix """
 		D = nx.DiGraph(self.count)
 		self.keep_states = sorted(nx.strongly_connected_components(D)[0])
-		self.keep_keys = map(lambda x: self.keys[x],keep_states)
+		self.keep_keys = map(lambda x: self.keys[x],self.keep_states)
 
-	def calc_trans(keep_states,state_keys,count):
+	def calc_trans(self):
 		""" calculate transition matrix """
+		count = self.count
+		keep_states = self.keep_states
 		nkeep = len(keep_states)
 		T = np.zeros([nkeep,nkeep],float)
-		n_nonzero = 0
-		neighbours = {}
 		for i in range(nkeep):
 			ni = reduce(lambda x,y:x+y, map(lambda x: count[keep_states[x]][keep_states[i]], range(nkeep)))
 			for j in range(nkeep):
 				T[j][i] = float(count[keep_states[j]][keep_states[i]])/float(ni)
-				#if count[keep_states[j]][keep_states[i]] != 0:
-				#	n_nonzero += 1
-				#	diff = difference(state_keys[keep_states[i]],state_keys[keep_states[j]])
-				#	if diff not in neighbours.keys():
-				#		neighbours[diff] = 0
-				#	neighbours[diff] += 1
-		#print "  number of nonzero elements in transition matrix = %i"%n_nonzero
-		#print "                  total size of transition matrix = %i"%(nkeep**2)
-	
-		return T,neighbours
+		self.T = T	
 

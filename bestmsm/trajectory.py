@@ -14,8 +14,6 @@ class TimeSeries:
 		else:
 			self.keys = filter(lambda x: x[0] not in ['#','@'],
 				open(keys).readlines())
-		print self.keys
-		self.traj_assign()
 
 	def readtraj(self):
 		"""	Reads trajectory files assuming two columns: time and state. 
@@ -48,10 +46,3 @@ class TimeSeries:
 			self.keys = keys.sort()
 		else:
 			self.keys = keys
-
-	def traj_assign(self):
-		assign = []
-		keys = self.keys
-		for s in self.states:
-			assign.append(keys.index(s))
-		self.assign = assign
