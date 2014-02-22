@@ -62,3 +62,16 @@ class MSM:
 				T[j][i] = float(count[keep_states[j]][keep_states[i]])/float(ni)
 		self.T = T	
 
+	def calc_rate(self,lagt):
+		""" calculate rate matrix using a Taylor series as described in De Sancho et al
+		J Chem Theor Comput (2013)"""
+		nkeep = len(keep_states)
+		K = self.T/lagt
+		for i in range(nkeep):
+			K[i][i] = -(np.sum(K[:i,i]) + np.sum(K[i+1:,i]))
+		self.K = K
+
+	def get_peq(self):
+
+	def get_eigs(self):
+
