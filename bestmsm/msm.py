@@ -17,6 +17,8 @@ class MSM:
 		self.check_connect()
 		# calculate transition matrix
 		self.calc_trans()
+		# calculate eigenvalues and eigenvectors
+		self.calc_eigs()
 
 	def merge_trajs(self,trajectories):
 		new_keys = []
@@ -71,7 +73,25 @@ class MSM:
 			K[i][i] = -(np.sum(K[:i,i]) + np.sum(K[i+1:,i]))
 		self.K = K
 
-	def get_peq(self):
-
 	def get_eigs(self):
-
+		#evalsK,rvecsK = np.linalg.eig(K)
+		self.evalsK,self.lvecsK,self.rvecsK = scipyla.eig(self.K,left=True)
+		self.evalsT,self.lvecsT,self.rvecsT = scipyla.eig(self.T,left=True)
+		# from K
+		elistK = []
+	    for i in range(nkeep):
+		    elistK.append([i,np.real(evalsK[i])])
+		elistK.sort(msm_lib.esort)
+		ieqK,eK = elistK[0]
+		peqK_sum = reduce(lambda x,y:x+y, map(lambda x: rvecsK[x,ieqK], 
+			range(nkeep)))
+		peqK = rvecsK[:,ieqK]/peqK_sum
+		# from T
+		elistT = []
+		for i in range(nkeep):
+			elistT.append([i,np.real(evalsT[i])])
+		elistT.sort(msm_lib.esort)
+		ieqT,eT = elistT[0]
+		peqT_sum = reduce(lambda x,y:x+y, map(lambda x: rvecsT[x,ieqT],
+			range(nkeep)))
+		peqT = rvecsT[:,ieqT]/peqT_sum
