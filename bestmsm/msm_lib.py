@@ -24,8 +24,6 @@ def esort(ei,ej):
 	else:
 		return 0
 
-
-
 def find_keys(state_keys,trans,manually_remove):
 	""" eliminate dead ends """
 	keep_states = []
@@ -43,7 +41,6 @@ def find_keys(state_keys,trans,manually_remove):
 		if sum > 0 and sumx > 0 and trans[i][i] > 0 and key not in manually_remove:
 			keep_states.append(i)
 			keep_keys.append(state_keys[i])
-
 	return keep_states,keep_keys
 
 def connect_groups(keep_states,trans):
@@ -75,35 +72,6 @@ def connect_groups(keep_states,trans):
 	
 	return connected_groups
 
-def calc_trans(keep_states,state_keys,count):
-	""" calculate transition matrix """
-	nkeep = len(keep_states)
-	T = np.zeros([nkeep,nkeep],float)
-	n_nonzero = 0
-	neighbours = {}
-	for i in range(nkeep):
-		ni = reduce(lambda x,y:x+y, map(lambda x: count[keep_states[x]][keep_states[i]], range(nkeep)))
-		for j in range(nkeep):
-			T[j][i] = float(count[keep_states[j]][keep_states[i]])/float(ni)
-			#if count[keep_states[j]][keep_states[i]] != 0:
-			#	n_nonzero += 1
-			#	diff = difference(state_keys[keep_states[i]],state_keys[keep_states[j]])
-			#	if diff not in neighbours.keys():
-			#		neighbours[diff] = 0
-			#	neighbours[diff] += 1
-	#print "  number of nonzero elements in transition matrix = %i"%n_nonzero
-	#print "                  total size of transition matrix = %i"%(nkeep**2)
-
-	return T,neighbours
-
-def calc_rate(keep_states,state_keys,count,lagt):
-	""" calculate rate matrix"""
-	nkeep = len(keep_states)
-	T,neighbours = calc_trans(keep_states,state_keys,count)
-	K = T/lagt
-	for i in range(nkeep):
-		K[i][i] = -(np.sum(K[:i,i]) + np.sum(K[i+1:,i]))
-	return T,K,neighbours
 
 def isnative(native_string, string):
 	s = ""
