@@ -95,3 +95,4 @@ class MSM:
 		peqT_sum = reduce(lambda x,y:x+y, map(lambda x: rvecsT[x,ieqT],
 			range(nkeep)))
 		peqT = rvecsT[:,ieqT]/peqT_sum
+		return peqT,rvecsT
