@@ -9,4 +9,4 @@ print "    time between frames : %s"%traj_ala5.dt
 print "    length of trajectory : %g"%len(traj_ala5.time)
 print "    states : ",traj_ala5.keys
 
-msm_ala5 = msm.MSM([traj_ala5,traj_ala5],1)
+msm_ala5 = msm.MSM([traj_ala5,traj_ala5],traj_ala5.dt)

@@ -1,7 +1,5 @@
 CHANGES.txt
-LICENSE.txt
 MANIFEST.in
-README.txt
 setup.py
 BestMSM.egg-info/PKG-INFO
 BestMSM.egg-info/SOURCES.txt
@@ -9,5 +7,6 @@ BestMSM.egg-info/dependency_links.txt
 BestMSM.egg-info/top_level.txt
 bestmsm/__init__.py
 bestmsm/msm.py
+bestmsm/msm_lib.py
 bestmsm/pcca.py
 bestmsm/trajectory.py

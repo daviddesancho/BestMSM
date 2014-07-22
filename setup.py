@@ -18,7 +18,7 @@ setup(
 		license='GPL',
 		packages=find_packages(),
 		keywords= "markov state model",
-		long_description=read('README.txt'),
+		long_description=read('README.md'),
 		classifiers = ["""\
 				Development Status :: 1 - Planning
 				Operating System :: POSIX :: Linux
