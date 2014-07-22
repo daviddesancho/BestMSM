@@ -1,0 +1,29 @@
+.. BestMSM documentation master file, created by
+   sphinx-quickstart on Tue Jul 22 23:45:47 2014.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+Welcome to BestMSM's documentation!
+===================================
+BestMSM is a Python package with a set of tools for constructing 
+a Markov state model (MSM) as we have implemented this methodology
+in the Best group.
+
+Modules:
+========
+
+.. toctree::
+   :maxdepth: 2
+
+   trajectory
+   msm
+   pcca
+
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
+
