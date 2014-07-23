@@ -1,13 +1,25 @@
 """ 
-================================
- MSM module from BestMSM	
-================================
+================
+ MSM 
+================
 """
 import sys
 import numpy as np
 import networkx as nx
 
 class MSM:
+    """
+    A class for constructing the MSM
+
+    Args: 
+        trajectories (list of str): set of trajectories
+        used for the construction.
+
+        lag (float): lag time for building the MSM
+
+    Attributes:
+        
+    """
     def __init__(self, trajectories, lag):
         # merge state keys from all trajectories
         self.merge_trajs(trajectories)

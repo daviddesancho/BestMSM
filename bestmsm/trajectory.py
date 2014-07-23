@@ -1,10 +1,37 @@
 """ 
-================================
- Trajectory module from BestMSM	
-================================
+================
+ Trajectory 
+================
 """
 
 class TimeSeries:
+    """Time series reader
+
+    A class to store all information about trajectories 
+    to be used for the construction of the MSM
+
+    Parameters
+    ----------
+    filename : str 
+        The name of the file to read. It is also used for 
+        indexing.
+
+    Attributes
+    ----------
+    filename : str 
+        The name of the file to read. It is also used for 
+        indexing.
+
+    time : list of floats
+        Time stamps for time series
+
+    states : list
+        Time series of states, whatever they are.
+        
+    keys : list
+        The names of the states.
+
+    """
     def __init__(self, filename, keys=None):
         self.filename = filename
         self.readtraj()
@@ -32,11 +59,11 @@ class TimeSeries:
         self.states = states
  
     def find_dt(self):
-        """ finds spacing between frames """
+        """ Finds spacing between frames """
         self.dt = self.time[1] - self.time[0]
 
     def find_keys(self):
-        """ finds state names """
+        """ Finds state names """
         keys = []
         for s in self.states:
             if s not in keys:
