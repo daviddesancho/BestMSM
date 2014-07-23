@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>MSM module from BestMSM &mdash; BestMSM 0.1 documentation</title>
+    <title>MSM &mdash; BestMSM 0.1 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -24,8 +24,8 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="BestMSM 0.1 documentation" href="index.html" />
-    <link rel="next" title="&lt;no title&gt;" href="pcca.html" />
-    <link rel="prev" title="Trajectory module from BestMSM" href="trajectory.html" /> 
+    <link rel="next" title="PCCA" href="pcca.html" />
+    <link rel="prev" title="Trajectory" href="trajectory.html" /> 
   </head>
   <body>
     <div class="related">
@@ -38,10 +38,10 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="pcca.html" title="&lt;no title&gt;"
+          <a href="pcca.html" title="PCCA"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="trajectory.html" title="Trajectory module from BestMSM"
+          <a href="trajectory.html" title="Trajectory"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">BestMSM 0.1 documentation</a> &raquo;</li> 
       </ul>
@@ -52,8 +52,47 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <span class="target" id="module-bestmsm.msm"><span id="msm"></span></span><div class="section" id="msm-module-from-bestmsm">
-<h1>MSM module from BestMSM<a class="headerlink" href="#msm-module-from-bestmsm" title="Permalink to this headline">¶</a></h1>
+  <span class="target" id="module-bestmsm.msm"><span id="msm"></span></span><div class="section" id="id1">
+<h1>MSM<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="bestmsm.msm.MSM">
+<em class="property">class </em><tt class="descclassname">bestmsm.msm.</tt><tt class="descname">MSM</tt><big>(</big><em>trajectories</em>, <em>lag</em><big>)</big><a class="headerlink" href="#bestmsm.msm.MSM" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class for constructing the MSM</p>
+<dl class="docutils">
+<dt>Args: </dt>
+<dd><p class="first">trajectories (list of str): set of trajectories
+used for the construction.</p>
+<p class="last">lag (float): lag time for building the MSM</p>
+</dd>
+</dl>
+<p>Attributes:</p>
+<dl class="method">
+<dt id="bestmsm.msm.MSM.calc_count">
+<tt class="descname">calc_count</tt><big>(</big><em>trajectories</em>, <em>lag</em><big>)</big><a class="headerlink" href="#bestmsm.msm.MSM.calc_count" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculate transition count matrix</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bestmsm.msm.MSM.calc_rate">
+<tt class="descname">calc_rate</tt><big>(</big><em>lagt</em><big>)</big><a class="headerlink" href="#bestmsm.msm.MSM.calc_rate" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculate rate matrix using a Taylor series as described in De Sancho et al
+J Chem Theor Comput (2013)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bestmsm.msm.MSM.calc_trans">
+<tt class="descname">calc_trans</tt><big>(</big><big>)</big><a class="headerlink" href="#bestmsm.msm.MSM.calc_trans" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculate transition matrix</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bestmsm.msm.MSM.check_connect">
+<tt class="descname">check_connect</tt><big>(</big><big>)</big><a class="headerlink" href="#bestmsm.msm.MSM.check_connect" title="Permalink to this definition">¶</a></dt>
+<dd><p>check connectivity of rate matrix</p>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 
 
@@ -64,10 +103,10 @@
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
   <p class="topless"><a href="trajectory.html"
-                        title="previous chapter">Trajectory module from BestMSM</a></p>
+                        title="previous chapter">Trajectory</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="pcca.html"
-                        title="next chapter">&lt;no title&gt;</a></p>
+                        title="next chapter">PCCA</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/msm.txt"
@@ -100,10 +139,10 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="pcca.html" title="&lt;no title&gt;"
+          <a href="pcca.html" title="PCCA"
              >next</a> |</li>
         <li class="right" >
-          <a href="trajectory.html" title="Trajectory module from BestMSM"
+          <a href="trajectory.html" title="Trajectory"
              >previous</a> |</li>
         <li><a href="index.html">BestMSM 0.1 documentation</a> &raquo;</li> 
       </ul>

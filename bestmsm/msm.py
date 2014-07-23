@@ -12,12 +12,18 @@ class MSM:
     A class for constructing the MSM
 
     Args: 
-        trajectories (list of str): set of trajectories
+        trajectories (list of str) : set of trajectories
         used for the construction.
 
-        lag (float): lag time for building the MSM
+        lag (float) : lag time for building the MSM.
 
     Attributes:
+        keys (list of str) : names of states.
+
+        count (np array) : transition count matrix.
+
+        keep_states (list of str) : names of states after
+        removing not strongly connected sets.
         
     """
     def __init__(self, trajectories, lag):
@@ -33,13 +39,14 @@ class MSM:
         self.calc_eigs()
     
     def merge_trajs(self, trajectories):
+        """ Merge all trajectories into a consistent set. """
         new_keys = []
         for traj in trajectories:
             new_keys += filter(lambda x: x not in new_keys, traj.keys)
         self.keys = new_keys
     
     def calc_count(self, trajectories, lag):
-        """ calculate transition count matrix """
+        """ Calculate transition count matrix. """
         keys = self.keys
         nkeys = len(keys)
         count = np.zeros([nkeys,nkeys], int)
@@ -59,7 +66,7 @@ class MSM:
         self.count = count
     
     def check_connect(self):
-        """ check connectivity of rate matrix """
+        """ Check connectivity of rate matrix. """
         D = nx.DiGraph(self.count)
         self.keep_states = sorted(nx.strongly_connected_components(D)[0])
         self.keep_keys = map(lambda x: self.keys[x], self.keep_states)

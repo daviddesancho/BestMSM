@@ -1,0 +1,46 @@
+bestmsm package
+===============
+
+Submodules
+----------
+
+bestmsm.msm module
+------------------
+
+.. automodule:: bestmsm.msm
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+bestmsm.msm_lib module
+----------------------
+
+.. automodule:: bestmsm.msm_lib
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+bestmsm.pcca module
+-------------------
+
+.. automodule:: bestmsm.pcca
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+bestmsm.trajectory module
+-------------------------
+
+.. automodule:: bestmsm.trajectory
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: bestmsm
+    :members:
+    :undoc-members:
+    :show-inheritance:

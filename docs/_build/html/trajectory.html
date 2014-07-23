@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Trajectory module from BestMSM &mdash; BestMSM 0.1 documentation</title>
+    <title>Trajectory &mdash; BestMSM 0.1 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="BestMSM 0.1 documentation" href="index.html" />
-    <link rel="next" title="MSM module from BestMSM" href="msm.html" />
+    <link rel="next" title="MSM" href="msm.html" />
     <link rel="prev" title="Welcome to BestMSM’s documentation!" href="index.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="msm.html" title="MSM module from BestMSM"
+          <a href="msm.html" title="MSM"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="index.html" title="Welcome to BestMSM’s documentation!"
@@ -52,8 +52,52 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <span class="target" id="module-bestmsm.trajectory"><span id="trajectory"></span></span><div class="section" id="trajectory-module-from-bestmsm">
-<h1>Trajectory module from BestMSM<a class="headerlink" href="#trajectory-module-from-bestmsm" title="Permalink to this headline">¶</a></h1>
+  <span class="target" id="module-bestmsm.trajectory"><span id="trajectory"></span></span><div class="section" id="id1">
+<h1>Trajectory<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="bestmsm.trajectory.TimeSeries">
+<em class="property">class </em><tt class="descclassname">bestmsm.trajectory.</tt><tt class="descname">TimeSeries</tt><big>(</big><em>filename</em>, <em>keys=None</em><big>)</big><a class="headerlink" href="#bestmsm.trajectory.TimeSeries" title="Permalink to this definition">¶</a></dt>
+<dd><p>Time series reader</p>
+<p>A class to store all information about trajectories 
+to be used for the construction of the MSM</p>
+<dl class="docutils">
+<dt>filename <span class="classifier-delimiter">:</span> <span class="classifier">str </span></dt>
+<dd>The name of the file to read. It is also used for 
+indexing.</dd>
+</dl>
+<dl class="docutils">
+<dt>filename <span class="classifier-delimiter">:</span> <span class="classifier">str </span></dt>
+<dd>The name of the file to read. It is also used for 
+indexing.</dd>
+<dt>time <span class="classifier-delimiter">:</span> <span class="classifier">list of floats</span></dt>
+<dd>Time stamps for time series</dd>
+<dt>states <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd>Time series of states, whatever they are.</dd>
+<dt>keys <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd>The names of the states.</dd>
+</dl>
+<dl class="method">
+<dt id="bestmsm.trajectory.TimeSeries.find_dt">
+<tt class="descname">find_dt</tt><big>(</big><big>)</big><a class="headerlink" href="#bestmsm.trajectory.TimeSeries.find_dt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds spacing between frames</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bestmsm.trajectory.TimeSeries.find_keys">
+<tt class="descname">find_keys</tt><big>(</big><big>)</big><a class="headerlink" href="#bestmsm.trajectory.TimeSeries.find_keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds state names</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bestmsm.trajectory.TimeSeries.readtraj">
+<tt class="descname">readtraj</tt><big>(</big><big>)</big><a class="headerlink" href="#bestmsm.trajectory.TimeSeries.readtraj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads trajectory files assuming two columns: time and state. 
+If there is only a single column, times are assumed to be the line
+numbers</p>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 
 
@@ -67,7 +111,7 @@
                         title="previous chapter">Welcome to BestMSM&#8217;s documentation!</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="msm.html"
-                        title="next chapter">MSM module from BestMSM</a></p>
+                        title="next chapter">MSM</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/trajectory.txt"
@@ -100,7 +144,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="msm.html" title="MSM module from BestMSM"
+          <a href="msm.html" title="MSM"
              >next</a> |</li>
         <li class="right" >
           <a href="index.html" title="Welcome to BestMSM’s documentation!"

@@ -1,0 +1,332 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>bestmsm package &mdash; BestMSM 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="BestMSM 0.1 documentation" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">BestMSM 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="bestmsm-package">
+<h1>bestmsm package<a class="headerlink" href="#bestmsm-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-bestmsm.msm">
+<span id="bestmsm-msm-module"></span><h2>bestmsm.msm module<a class="headerlink" href="#module-bestmsm.msm" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bestmsm.msm.MSM">
+<em class="property">class </em><tt class="descclassname">bestmsm.msm.</tt><tt class="descname">MSM</tt><big>(</big><em>trajectories</em>, <em>lag</em><big>)</big><a class="headerlink" href="#bestmsm.msm.MSM" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class for constructing the MSM</p>
+<dl class="docutils">
+<dt>Args: </dt>
+<dd><p class="first">trajectories (list of str): set of trajectories
+used for the construction.</p>
+<p class="last">lag (float): lag time for building the MSM</p>
+</dd>
+</dl>
+<p>Attributes:</p>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="bestmsm.msm.MSM.calc_count">
+<tt class="descname">calc_count</tt><big>(</big><em>trajectories</em>, <em>lag</em><big>)</big><a class="headerlink" href="#bestmsm.msm.MSM.calc_count" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculate transition count matrix</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bestmsm.msm.MSM.calc_rate">
+<tt class="descname">calc_rate</tt><big>(</big><em>lagt</em><big>)</big><a class="headerlink" href="#bestmsm.msm.MSM.calc_rate" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculate rate matrix using a Taylor series as described in De Sancho et al
+J Chem Theor Comput (2013)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bestmsm.msm.MSM.calc_trans">
+<tt class="descname">calc_trans</tt><big>(</big><big>)</big><a class="headerlink" href="#bestmsm.msm.MSM.calc_trans" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculate transition matrix</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bestmsm.msm.MSM.check_connect">
+<tt class="descname">check_connect</tt><big>(</big><big>)</big><a class="headerlink" href="#bestmsm.msm.MSM.check_connect" title="Permalink to this definition">¶</a></dt>
+<dd><p>check connectivity of rate matrix</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bestmsm.msm.MSM.get_eigs">
+<tt class="descname">get_eigs</tt><big>(</big><big>)</big><a class="headerlink" href="#bestmsm.msm.MSM.get_eigs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="bestmsm.msm.MSM.merge_trajs">
+<tt class="descname">merge_trajs</tt><big>(</big><em>trajectories</em><big>)</big><a class="headerlink" href="#bestmsm.msm.MSM.merge_trajs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-bestmsm.msm_lib">
+<span id="bestmsm-msm-lib-module"></span><h2>bestmsm.msm_lib module<a class="headerlink" href="#module-bestmsm.msm_lib" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="bestmsm.msm_lib.boots_pick">
+<tt class="descclassname">bestmsm.msm_lib.</tt><tt class="descname">boots_pick</tt><big>(</big><em>file</em>, <em>blocksize</em><big>)</big><a class="headerlink" href="#bestmsm.msm_lib.boots_pick" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="bestmsm.msm_lib.bootsfiles">
+<tt class="descclassname">bestmsm.msm_lib.</tt><tt class="descname">bootsfiles</tt><big>(</big><em>traj_list_dt</em><big>)</big><a class="headerlink" href="#bestmsm.msm_lib.bootsfiles" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="bestmsm.msm_lib.connect_groups">
+<tt class="descclassname">bestmsm.msm_lib.</tt><tt class="descname">connect_groups</tt><big>(</big><em>keep_states</em>, <em>trans</em><big>)</big><a class="headerlink" href="#bestmsm.msm_lib.connect_groups" title="Permalink to this definition">¶</a></dt>
+<dd><p>check for connected groups</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bestmsm.msm_lib.difference">
+<tt class="descclassname">bestmsm.msm_lib.</tt><tt class="descname">difference</tt><big>(</big><em>k1</em>, <em>k2</em><big>)</big><a class="headerlink" href="#bestmsm.msm_lib.difference" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="bestmsm.msm_lib.dotproduct">
+<tt class="descclassname">bestmsm.msm_lib.</tt><tt class="descname">dotproduct</tt><big>(</big><em>v1</em>, <em>v2</em>, <em>sum=&lt;built-in function sum&gt;</em>, <em>imap=&lt;type 'itertools.imap'&gt;</em>, <em>mul=&lt;built-in function mul&gt;</em><big>)</big><a class="headerlink" href="#bestmsm.msm_lib.dotproduct" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="bestmsm.msm_lib.esort">
+<tt class="descclassname">bestmsm.msm_lib.</tt><tt class="descname">esort</tt><big>(</big><em>ei</em>, <em>ej</em><big>)</big><a class="headerlink" href="#bestmsm.msm_lib.esort" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="bestmsm.msm_lib.find_keys">
+<tt class="descclassname">bestmsm.msm_lib.</tt><tt class="descname">find_keys</tt><big>(</big><em>state_keys</em>, <em>trans</em>, <em>manually_remove</em><big>)</big><a class="headerlink" href="#bestmsm.msm_lib.find_keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>eliminate dead ends</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bestmsm.msm_lib.isnative">
+<tt class="descclassname">bestmsm.msm_lib.</tt><tt class="descname">isnative</tt><big>(</big><em>native_string</em>, <em>string</em><big>)</big><a class="headerlink" href="#bestmsm.msm_lib.isnative" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="bestmsm.msm_lib.mat_mul_v">
+<tt class="descclassname">bestmsm.msm_lib.</tt><tt class="descname">mat_mul_v</tt><big>(</big><em>m</em>, <em>v</em><big>)</big><a class="headerlink" href="#bestmsm.msm_lib.mat_mul_v" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="bestmsm.msm_lib.onrate">
+<tt class="descclassname">bestmsm.msm_lib.</tt><tt class="descname">onrate</tt><big>(</big><em>states</em>, <em>target</em>, <em>K</em>, <em>peq</em><big>)</big><a class="headerlink" href="#bestmsm.msm_lib.onrate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="bestmsm.msm_lib.partial_flux">
+<tt class="descclassname">bestmsm.msm_lib.</tt><tt class="descname">partial_flux</tt><big>(</big><em>states</em>, <em>peq</em>, <em>K</em>, <em>pfold</em>, <em>d_peq</em>, <em>d_K</em>, <em>d_pfold</em>, <em>elem</em>, <em>target</em><big>)</big><a class="headerlink" href="#bestmsm.msm_lib.partial_flux" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculate derivative of flux</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bestmsm.msm_lib.partial_peq">
+<tt class="descclassname">bestmsm.msm_lib.</tt><tt class="descname">partial_peq</tt><big>(</big><em>beta</em>, <em>peq</em>, <em>elem</em><big>)</big><a class="headerlink" href="#bestmsm.msm_lib.partial_peq" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculate derivative of equilibrium distribution</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bestmsm.msm_lib.partial_pfold">
+<tt class="descclassname">bestmsm.msm_lib.</tt><tt class="descname">partial_pfold</tt><big>(</big><em>states</em>, <em>K</em>, <em>d_K</em>, <em>FF</em>, <em>UU</em>, <em>elem</em>, <em>dg</em><big>)</big><a class="headerlink" href="#bestmsm.msm_lib.partial_pfold" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculate derivative of pfold</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bestmsm.msm_lib.partial_rate">
+<tt class="descclassname">bestmsm.msm_lib.</tt><tt class="descname">partial_rate</tt><big>(</big><em>beta</em>, <em>K</em>, <em>elem</em>, <em>dg</em><big>)</big><a class="headerlink" href="#bestmsm.msm_lib.partial_rate" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculate derivative of rate matrix</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="bestmsm.msm_lib.propagate">
+<tt class="descclassname">bestmsm.msm_lib.</tt><tt class="descname">propagate</tt><big>(</big><em>rate</em>, <em>t</em>, <em>pini</em><big>)</big><a class="headerlink" href="#bestmsm.msm_lib.propagate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="bestmsm.msm_lib.propagate_eig">
+<tt class="descclassname">bestmsm.msm_lib.</tt><tt class="descname">propagate_eig</tt><big>(</big><em>elist</em>, <em>rvecs</em>, <em>lvecs</em>, <em>t</em>, <em>pini</em><big>)</big><a class="headerlink" href="#bestmsm.msm_lib.propagate_eig" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="bestmsm.msm_lib.run_commit">
+<tt class="descclassname">bestmsm.msm_lib.</tt><tt class="descname">run_commit</tt><big>(</big><em>states</em>, <em>K</em>, <em>peq</em>, <em>FF</em>, <em>UU</em><big>)</big><a class="headerlink" href="#bestmsm.msm_lib.run_commit" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculate committors and reactive flux</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-bestmsm.pcca">
+<span id="bestmsm-pcca-module"></span><h2>bestmsm.pcca module<a class="headerlink" href="#module-bestmsm.pcca" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-bestmsm.trajectory">
+<span id="bestmsm-trajectory-module"></span><h2>bestmsm.trajectory module<a class="headerlink" href="#module-bestmsm.trajectory" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="bestmsm.trajectory.TimeSeries">
+<em class="property">class </em><tt class="descclassname">bestmsm.trajectory.</tt><tt class="descname">TimeSeries</tt><big>(</big><em>filename</em>, <em>keys=None</em><big>)</big><a class="headerlink" href="#bestmsm.trajectory.TimeSeries" title="Permalink to this definition">¶</a></dt>
+<dd><p>Time series reader</p>
+<p>A class to store all information about trajectories 
+to be used for the construction of the MSM</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>filename</strong> : str</p>
+<blockquote class="last">
+<div><p>The name of the file to read. It is also used for 
+indexing.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="11%" />
+<col width="89%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>filename</td>
+<td>(str) The name of the file to read. It is also used for indexing.</td>
+</tr>
+<tr class="row-even"><td>time</td>
+<td>(list of floats) Time stamps for time series</td>
+</tr>
+<tr class="row-odd"><td>states</td>
+<td>(list) Time series of states, whatever they are.</td>
+</tr>
+<tr class="row-even"><td>keys</td>
+<td>(list) The names of the states.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="bestmsm.trajectory.TimeSeries.find_dt">
+<tt class="descname">find_dt</tt><big>(</big><big>)</big><a class="headerlink" href="#bestmsm.trajectory.TimeSeries.find_dt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds spacing between frames</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bestmsm.trajectory.TimeSeries.find_keys">
+<tt class="descname">find_keys</tt><big>(</big><big>)</big><a class="headerlink" href="#bestmsm.trajectory.TimeSeries.find_keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds state names</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="bestmsm.trajectory.TimeSeries.readtraj">
+<tt class="descname">readtraj</tt><big>(</big><big>)</big><a class="headerlink" href="#bestmsm.trajectory.TimeSeries.readtraj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads trajectory files assuming two columns: time and state. 
+If there is only a single column, times are assumed to be the line
+numbers</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-bestmsm">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-bestmsm" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">bestmsm package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-bestmsm.msm">bestmsm.msm module</a></li>
+<li><a class="reference internal" href="#module-bestmsm.msm_lib">bestmsm.msm_lib module</a></li>
+<li><a class="reference internal" href="#module-bestmsm.pcca">bestmsm.pcca module</a></li>
+<li><a class="reference internal" href="#module-bestmsm.trajectory">bestmsm.trajectory module</a></li>
+<li><a class="reference internal" href="#module-bestmsm">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/docs/source/bestmsm.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">BestMSM 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, David De Sancho.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
