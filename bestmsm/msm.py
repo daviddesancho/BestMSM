@@ -7,43 +7,52 @@ import sys
 import numpy as np
 import networkx as nx
 
+
 class MSM:
     """
     A class for constructing the MSM
 
-    Args: 
-        trajectories (list of str) : set of trajectories
-        used for the construction.
+    Parameters
+    ----------
+    trajectories : list of str
+        Set of trajectories used for the construction.
 
-        lag (float) : lag time for building the MSM.
+    lag : float
+        Lag time for building the MSM.
 
-    Attributes:
-        keys (list of str) : names of states.
+    Attributes
+    ----------
+    keys : list of str
+        Names of states.
 
-        count (np array) : transition count matrix.
+    count : np array)
+        Transition count matrix.
 
-        keep_states (list of str) : names of states after
-        removing not strongly connected sets.
+    keep_states : list of str)
+        Names of states after removing not strongly connected sets.
         
     """
     def __init__(self, trajectories, lag):
+        self.keep_states = None
+        self.keep_keys = None
+        self.T = None
         # merge state keys from all trajectories
-        self.merge_trajs(trajectories)
+        self.keys = self.merge_trajs(trajectories)
         # calculate count matrix
-        self.calc_count(trajectories, lag=1)
+        self.count = calc_count(trajectories, lag=1)
         # find largest strongly connected sets
-        self.check_connect()
+        self.keep_states, self.keep_keys = self.check_connect()
         # calculate transition matrix
         self.calc_trans()
         # calculate eigenvalues and eigenvectors
         self.calc_eigs()
-    
+
     def merge_trajs(self, trajectories):
         """ Merge all trajectories into a consistent set. """
         new_keys = []
         for traj in trajectories:
             new_keys += filter(lambda x: x not in new_keys, traj.keys)
-        self.keys = new_keys
+        return new_keys
     
     def calc_count(self, trajectories, lag):
         """ Calculate transition count matrix. """
@@ -53,7 +62,6 @@ class MSM:
         for traj in trajectories:
             raw = traj.states
             nraw = len(raw)
-            pstate = "NULL"
             for i in range(0, nraw-lag, lag):
                 j = i + lag
                 state_i = raw[i]
@@ -62,14 +70,18 @@ class MSM:
                     idx_i = keys.index(state_i)
                 if state_j in keys:
                     idx_j = keys.index(state_j)
-                count[idx_j][idx_i] += 1
-        self.count = count
+                try:
+                    count[idx_j][idx_i] += 1
+                except IndexError:
+                    pass
+        return count
     
     def check_connect(self):
         """ Check connectivity of rate matrix. """
         D = nx.DiGraph(self.count)
-        self.keep_states = sorted(nx.strongly_connected_components(D)[0])
-        self.keep_keys = map(lambda x: self.keys[x], self.keep_states)
+        keep_states = sorted(nx.strongly_connected_components(D)[0])
+        keep_keys = map(lambda x: self.keys[x], self.keep_states)
+        return keep_states, keep_keys
 
     def calc_trans(self):
         """ calculate transition matrix """
@@ -92,7 +104,7 @@ class MSM:
             K[i][i] = -(np.sum(K[:i,i]) + np.sum(K[i+1:,i]))
         self.K = K
 
-    def get_eigs(self):
+    def calc_eigs(self):
         #evalsK,rvecsK = np.linalg.eig(K)
         self.evalsK, self.lvecsK, self.rvecsK = scipyla.eig(self.K, left=True)
         self.evalsT, self.lvecsT, self.rvecsT = scipyla.eig(self.T, left=True)
