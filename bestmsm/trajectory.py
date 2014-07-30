@@ -31,36 +31,40 @@ class TimeSeries:
     keys : list
         The names of the states.
 
+    dt : float
+        Lapse between snapshots
+
     """
     def __init__(self, filename, keys=None):
         self.filename = filename
-        self.readtraj()
-        self.find_dt()
-        if keys == None:
-            self.find_keys()
+        self.time, self.states = self.read_traj()
+        self.dt = self.find_dt()
+        if keys is None:
+            self.keys = self.find_keys()
         else:
-            self.keys = filter(lambda x: x[0] not in ['#','@'],
-        	    open(keys).readlines())
-    
-    def readtraj(self):
+            self.keys = filter(lambda x: x[0] not in ['#', '@'],
+                               open(keys).readlines())
+
+    def read_traj(self):
         """	Reads trajectory files assuming two columns: time and state. 
         If there is only a single column, times are assumed to be the line
-        numbers """
-        raw = filter(lambda x: x[0] not in ['#','@'],
-            open(self.filename).readlines())
+        numbers
+
+        """
+        raw = filter(lambda x: x[0] not in ['#', '@'],
+                     open(self.filename).readlines())
         try:
-            data = map(lambda x: (x.split()[0],x.split()[1]), raw)
+            data = map(lambda x: (x.split()[0], x.split()[1]), raw)
             time = [float(x[0]) for x in data]
             states = [x[1] for x in data]
         except IndexError:
             states = [x[0] for x in data]
             time = range(len(state))
-        self.time = time
-        self.states = states
+        return time, states
  
     def find_dt(self):
         """ Finds spacing between frames """
-        self.dt = self.time[1] - self.time[0]
+        return self.time[1] - self.time[0]
 
     def find_keys(self):
         """ Finds state names """
@@ -69,7 +73,8 @@ class TimeSeries:
             if s not in keys:
                 keys.append(s)
         # sort if all integers
-        if all(isinstance(x,int) == True for x in keys):
-            self.keys = keys.sort()
+        if all(isinstance(x,int) is True for x in keys):
+            keys = keys.sort()
         else:
-	        self.keys = keys
+            pass
+        return keys
