@@ -3,7 +3,9 @@
  MSM 
 ================
 """
+
 import sys
+import types
 import numpy as np
 import networkx as nx
 
@@ -25,27 +27,26 @@ class MSM:
     keys : list of str
         Names of states.
 
-    count : np array)
+    count : np array
         Transition count matrix.
 
-    keep_states : list of str)
+    keep_states : list of str
         Names of states after removing not strongly connected sets.
         
     """
-    def __init__(self, trajectories, lag):
+    def __init__(self, trajectories):
         self.keep_states = None
         self.keep_keys = None
-        self.T = None
         # merge state keys from all trajectories
         self.keys = self.merge_trajs(trajectories)
-        # calculate count matrix
-        self.count = calc_count(trajectories, lag=1)
-        # find largest strongly connected sets
-        self.keep_states, self.keep_keys = self.check_connect()
+        self.data = trajectories
+#        # find largest strongly connected sets
+#        self.keep_states, self.keep_keys = self.check_connect()
         # calculate transition matrix
-        self.calc_trans()
+#        self.T = self.calc_trans()
+#        self.K = self.calc_rate()
         # calculate eigenvalues and eigenvectors
-        self.calc_eigs()
+#        self.calc_eigs()
 
     def merge_trajs(self, trajectories):
         """ Merge all trajectories into a consistent set. """
@@ -54,13 +55,18 @@ class MSM:
             new_keys += filter(lambda x: x not in new_keys, traj.keys)
         return new_keys
     
-    def calc_count(self, trajectories, lag):
+    def calc_count(self, lagt=None):
         """ Calculate transition count matrix. """
+        # initialize count matrix 
         keys = self.keys
         nkeys = len(keys)
         count = np.zeros([nkeys,nkeys], int)
-        for traj in trajectories:
+
+        # loop over trajectories
+        for traj in self.data:
             raw = traj.states
+            dt = traj.dt
+            lag = int(lagt/dt) # lag time in frames
             nraw = len(raw)
             for i in range(0, nraw-lag, lag):
                 j = i + lag
@@ -83,28 +89,33 @@ class MSM:
         keep_keys = map(lambda x: self.keys[x], self.keep_states)
         return keep_states, keep_keys
 
-    def calc_trans(self):
-        """ calculate transition matrix """
-        count = self.count
+    def calc_trans(self, count=None, lagt=None):
+        """ Calculate transition matrix """
+        if not isinstance(count, list):
+            count = self.calc_count(lagt)
+            print count
         keep_states = self.keep_states
         nkeep = len(keep_states)
         T = np.zeros([nkeep,nkeep], float)
         for i in range(nkeep):
-            ni = reduce(lambda x, y: x + y, map(lambda x: count[keep_states[x]][keep_states[i]], range(nkeep)))
+            ni = reduce(lambda x, y: x + y,
+                        map(lambda x: count[keep_states[x]][keep_states[i]],
+                            range(nkeep)))
             for j in range(nkeep):
                 T[j][i] = float(count[keep_states[j]][keep_states[i]])/float(ni)
-        self.T = T	
+        return T
     
     def calc_rate(self, lagt):
-        """ calculate rate matrix using a Taylor series as described in De Sancho et al
+        """ Calculate rate matrix using a Taylor series as described in De Sancho et al
         J Chem Theor Comput (2013)"""
         nkeep = len(keep_states)
         K = self.T/lagt
         for i in range(nkeep):
             K[i][i] = -(np.sum(K[:i,i]) + np.sum(K[i+1:,i]))
-        self.K = K
+        return K
 
     def calc_eigs(self):
+        """ Calculate eigenvalues and eigenvectors"""
         #evalsK,rvecsK = np.linalg.eig(K)
         self.evalsK, self.lvecsK, self.rvecsK = scipyla.eig(self.K, left=True)
         self.evalsT, self.lvecsT, self.rvecsT = scipyla.eig(self.T, left=True)
@@ -126,4 +137,4 @@ class MSM:
         peqT_sum = reduce(lambda x,y: x + y, map(lambda x: rvecsT[x,ieqT],
              range(nkeep)))
         peqT = rvecsT[:,ieqT]/peqT_sum
-        return peqT,rvecsT
+        return peqT, rvecsT
