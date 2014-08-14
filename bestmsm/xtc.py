@@ -49,7 +49,6 @@ _EXDRNOMEM = 10         # Not enough memory
 _EXDRENDOFFILE = 11     # End of file
 _EXDRFILENOTFOUND = 12  # File not found
 
-
 def loadXDRLibrary(xdr_library_path):
     global _xdrlib
 
