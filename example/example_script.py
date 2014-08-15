@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import sys
 import bestmsm.trajectory as traj
 import bestmsm.msm as msm
 
