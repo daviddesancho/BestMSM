@@ -87,6 +87,7 @@ class MasterMSM:
             plt.show()
 
 class MSM:
+
     """
     A class for constructing the MSM
 
@@ -115,21 +116,30 @@ class MSM:
         # merge state keys from all trajectories
         self.keys = keys
         self.data = data
-        self.count = self.calc_count(lagt)
+        self.count = self.calc_count_multi(lagt)
         self.keep_states, self.keep_keys = self.check_connect()
         self.trans = self.calc_trans(lagt)
         self.rate = self.calc_rate(lagt)
         self.tauT, self.peqT, self.rvecsT, self.lvecsT = \
             self.calc_eigs(lagt)
 
-    def calc_count(self, lagt=None):
-        """ Calculate transition count matrix. """
-        # initialize count matrix
+    def calc_count_multi(self, lagt=None, nproc=None):
+        """ Calculate transition count matrix in parallel """
+        if not nproc:
+            nproc = mp.cpu_count()
+        pool = mp.Pool(processes=nproc)
+        mpinput = map(lambda x: [x, self.keys, lagt], self.data)
+        result = pool.map(msm_lib.calc_count_worker, mpinput)
+        count = reduce(lambda x, y: np.matrix(x) + np.matrix(y), result)
+        return np.array(count)
+ 
+    def calc_count_seq(self, lagt=None):
+        """ Calculate transition count matrix sequentially """
         print self.keys
         keys = self.keys
         nkeys = len(keys)
         count = np.zeros([nkeys,nkeys], int)
-        # loop over trajectories
+
         for traj in self.data:
             raw = traj.states
             dt = traj.dt
@@ -148,7 +158,7 @@ class MSM:
                 except IndexError:
                     pass
         return count
-    
+   
     def check_connect(self):
         """ Check connectivity of rate matrix. """
         print "\n checking connectivity"
@@ -162,6 +172,7 @@ class MSM:
         :param lagt:
         """
         nkeep = len(self.keep_states)
+        print nkeep
         keep_states = self.keep_states
         count = self.count
         trans = np.zeros([nkeep, nkeep], float)
