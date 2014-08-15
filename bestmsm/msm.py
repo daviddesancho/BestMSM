@@ -5,8 +5,11 @@
 """
 
 import numpy as np
+import scipy.linalg as scipyla
+import msm_lib
 import networkx as nx
 import matplotlib.pyplot as plt
+import multiprocessing as mp
 
 class MasterMSM:
     """
@@ -38,7 +41,7 @@ class MasterMSM:
         self.keys = self.__merge_trajs()
         self.dt = self.__min_dt()
         self.__out()
-        self.__chapman_kolmogorov()
+        self.__chapman_kolmogorov(N=5)
 
     def __merge_trajs(self):
         """ Merge all trajectories into a consistent set"""
@@ -53,28 +56,35 @@ class MasterMSM:
 
     def __out(self):
         """ Output description to user"""
-        print " Building MSM from "
-        print map(lambda x: x.filename, self.data)
+        print " Building MSM from \n",map(lambda x: x.filename, self.data)
 
-    def __chapman_kolmogorov(self):
-        """ Carry out Chapman-Kolmogorov test"""
+    def __chapman_kolmogorov(self, plot=True, N=1):
+        """ Carry out Chapman-Kolmogorov test
+        :param plot:
+        :param N:
+        """
 
         # defining lag times to produce the MSM
-        #lagtimes = self.dt*np.array([1, 2, 5, 10, 20, 50, 100, 200, 500])
-        lagtimes = self.dt*np.array([1])
+        lagtimes = self.dt*np.array([1, 2, 5, 10, 20, 50, 100, 200, 500])
         msms = {}
         data = []
         for lagt in lagtimes:
             print "\n Generating MSM at lag time: %g"%lagt
             msms[lagt] = MSM(self.data, self.keys, lagt)
-            print "\n    Count matrix:"
-            print msms[lagt].count
-            print "\n    Transition matrix:"
-            print msms[lagt].trans
-            data.append(lagt, msms[lagt].tauT[1])
-        plt.plot(data[:,0], data[:,1])
-        plt.show()
-
+            print "\n    Count matrix:\n", msms[lagt].count
+            print "\n    Transition matrix:\n", msms[lagt].trans
+            dat = [lagt]
+            for n in range(N):
+                dat.append(msms[lagt].tauT[n])
+            data.append(dat)
+        if plot:
+            data = np.array(data)
+            fig, ax = plt.subplots(facecolor='white')
+            for n in range(N):
+                ax.plot(data[:,0], data[:,n], label=n)
+            ax.set_xlabel(r'Time', fontsize=16)
+            ax.set_ylabel(r'$\tau$', fontsize=16)
+            plt.show()
 
 class MSM:
     """
@@ -100,6 +110,7 @@ class MSM:
         Names of states after removing not strongly connected sets.
         
     """
+
     def __init__(self, data, keys=None, lagt=None):
         # merge state keys from all trajectories
         self.keys = keys
@@ -107,7 +118,9 @@ class MSM:
         self.count = self.calc_count(lagt)
         self.keep_states, self.keep_keys = self.check_connect()
         self.trans = self.calc_trans(lagt)
-        self.tauT = self.calc_eigs()
+        self.rate = self.calc_rate(lagt)
+        self.tauT, self.peqT, self.rvecsT, self.lvecsT = \
+            self.calc_eigs(lagt)
 
     def calc_count(self, lagt=None):
         """ Calculate transition count matrix. """
@@ -145,7 +158,9 @@ class MSM:
         return keep_states, keep_keys
 
     def calc_trans(self, lagt=None):
-        """ Calculate transition matrix """
+        """ Calculate transition matrix
+        :param lagt:
+        """
         nkeep = len(self.keep_states)
         keep_states = self.keep_states
         count = self.count
@@ -158,9 +173,9 @@ class MSM:
         return trans
     
     def calc_rate(self, lagt=None):
-        """ Calculate rate matrix using a Taylor series 
-        as described in De Sancho et al 
-        J Chem Theor Comput (2013)
+        """ Calculate rate matrix using a Taylor series as
+        described in De Sancho et al J Chem Theor Comput (2013)
+        :param lagt:
         """
         nkeep = len(self.keep_states)
         rate = self.trans/lagt
@@ -169,13 +184,16 @@ class MSM:
         return rate
 
     def calc_eigs(self, lagt=None):
-        """ Calculate eigenvalues and eigenvectors"""
-        #evalsK,rvecsK = np.linalg.eig(K)
-        self.evalsK, self.lvecsK, self.rvecsK = \
+        """ Calculate eigenvalues and eigenvectors
+        :param lagt:
+        """
+
+        evalsK, lvecsK, rvecsK = \
                    scipyla.eig(self.rate, left=True)
-        self.evalsT, self.lvecsT, self.rvecsT = \
+        evalsT, lvecsT, rvecsT = \
                 scipyla.eig(self.trans, left=True)
 #        # sort modes
+        nkeep = len(self.keep_states)
         elistK = []
         for i in range(nkeep):
             elistK.append([i,np.real(evalsK[i])])
@@ -188,17 +206,11 @@ class MSM:
         # calculate relaxation times from K and T
         tauK = []
         tauT = []
-        for i in range(nkeep):
+        for i in range(1,nkeep):
             iiK,lamK = elistK[i]
-            if abs(lamK)>1.e-15:
-                tauK.append(-1./lamK)
-            else:
-                tauK.append(0.)
+            tauK.append(-1./lamK)
             iT, lamT = elistT[i]
-            if lamT>1.e-15:
-                tauT.append(-lagt/np.log(lamT))
-            else:
-                tauT.append(0.)
+            tauT.append(-lagt/np.log(lamT))
 
         # equilibrium probabilities
         ieqK, eK = elistK[0]
@@ -210,5 +222,3 @@ class MSM:
              range(nkeep)))
         peqT = rvecsT[:,ieqT]/peqT_sum
         return tauT, peqT, rvecsT, lvecsT
-#
-
