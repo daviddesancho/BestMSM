@@ -20,8 +20,10 @@ class MasterMSM:
     trajectories : list of str
         Set of trajectories used for the construction.
 
-    lag : float
-        Lag time for building the MSM.
+    filekeys : str
+        A file from which the states are read. If not defined, then
+        keys are automatically generated from the time series.
+
 
     Attributes
     ----------
@@ -33,39 +35,79 @@ class MasterMSM:
 
     keep_states : list of str
         Names of states after removing not strongly connected sets.
+
+    msms : dict
+        A dictionary containing MSMs for different lag times.
         
     """
 
-    def __init__(self, trajectories):
+    def __init__(self, trajectories, filekeys=None):
         self.data = trajectories
-        self.keys = self.__merge_trajs()
+        try:
+            self.keys = map(lambda x: x.split()[0],
+                    open(filekeys, "r").readlines())
+        except TypeError:
+            self.keys = self.__merge_trajs()
         self.dt = self.__min_dt()
         self.__out()
-        self.__chapman_kolmogorov(N=5)
+        self.msms = {}
 
     def __merge_trajs(self):
-        """ Merge all trajectories into a consistent set"""
+        """ Merge all trajectories into a consistent set.
+        
+        """
         new_keys = []
         for traj in self.data:
             new_keys += filter(lambda x: x not in new_keys, traj.keys)
         return new_keys
 
     def __min_dt(self):
-        """ Find minimum dt in trajectories"""
+        """ Find minimum dt in trajectories.
+        
+        """
         return np.min(map(lambda x: x.dt, self.data))
 
     def __out(self):
-        """ Output description to user"""
+        """ Output description to user.
+        
+        """
         print " Building MSM from \n",map(lambda x: x.filename, self.data)
+        print "     # states: %g"%(len(self.keys))
+        print self.keys
 
-    def __chapman_kolmogorov(self, plot=True, N=1):
-        """ Carry out Chapman-Kolmogorov test
-        :param plot:
-        :param N:
+    def do_msm(self, lagt):
+        """ Construct MSM for specific value of lag time.
+        
+        Parameters:
+        -----------
+        lagt : float
+            The lag time.
+
+        """
+
+        self.msms[lagt] = MSM(self.data, self.keys, lagt)
+
+
+    def chapman_kolmogorov(self, plot=True, N=1):
+        """ Carry out Chapman-Kolmogorov test.
+
+        Parameters:
+        -----------
+        plot : bool
+            Whether the lag time dependence of the relaxation times should be plotted.
+
+        N: int
+            The number of modes for which we are building the MSM.
+
+        Returns : dict
+            A dictionary with the multiple instances of the MSM class.
+
         """
 
         # defining lag times to produce the MSM
         lagtimes = self.dt*np.array([1, 2, 5, 10, 20, 50, 100, 200, 500])
+
+        # create MSMs at multiple lag times
         msms = {}
         data = []
         for lagt in lagtimes:
@@ -77,17 +119,19 @@ class MasterMSM:
             for n in range(N):
                 dat.append(msms[lagt].tauT[n])
             data.append(dat)
+
         if plot:
             data = np.array(data)
             fig, ax = plt.subplots(facecolor='white')
             for n in range(N):
-                ax.plot(data[:,0], data[:,n], label=n)
+                ax.loglog(data[:,0], data[:,n+1], label=n)
             ax.set_xlabel(r'Time', fontsize=16)
             ax.set_ylabel(r'$\tau$', fontsize=16)
             plt.show()
 
-class MSM:
+        return msms
 
+class MSM:
     """
     A class for constructing the MSM
 
@@ -98,6 +142,7 @@ class MSM:
 
     lag : float
         Lag time for building the MSM.
+
 
     Attributes
     ----------
@@ -124,9 +169,15 @@ class MSM:
             self.calc_eigs(lagt)
 
     def calc_count_multi(self, lagt=None, nproc=None):
-        """ Calculate transition count matrix in parallel """
-        if not nproc:
+        """ Calculate transition count matrix in parallel 
+        
+        """
+        if not nproc:           
             nproc = mp.cpu_count()
+            if len(self.data) < nproc:
+                nproc = len(self.data)
+                print " running on %g processors"%nproc
+        print nproc
         pool = mp.Pool(processes=nproc)
         mpinput = map(lambda x: [x, self.keys, lagt], self.data)
         result = pool.map(msm_lib.calc_count_worker, mpinput)
@@ -134,7 +185,9 @@ class MSM:
         return np.array(count)
  
     def calc_count_seq(self, lagt=None):
-        """ Calculate transition count matrix sequentially """
+        """ Calculate transition count matrix sequentially 
+        
+        """
         print self.keys
         keys = self.keys
         nkeys = len(keys)
@@ -160,7 +213,9 @@ class MSM:
         return count
    
     def check_connect(self):
-        """ Check connectivity of rate matrix. """
+        """ Check connectivity of rate matrix. 
+        
+        """
         print "\n checking connectivity"
         D = nx.DiGraph(self.count)
         keep_states = sorted(nx.strongly_connected_components(D)[0])

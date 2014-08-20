@@ -58,8 +58,9 @@ class TimeSeries:
             time = [float(x[0]) for x in data]
             states = [x[1] for x in data]
         except IndexError:
-            states = [x[0] for x in data]
-            time = range(len(state))
+            data = map(lambda x: x.split()[0], raw)
+            states = [x for x in data]
+            time = range(len(states))
         return time, states
  
     def find_dt(self):
