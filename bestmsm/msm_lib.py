@@ -328,6 +328,6 @@ def calc_count_worker(x):
             idx_j = keys.index(state_j)
         try:
             count[idx_j][idx_i] += 1
-        except IndexError:
+        except UnboundLocalError:
             pass
     return count 

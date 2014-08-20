@@ -71,7 +71,7 @@ class MasterMSM:
         """ Output description to user.
         
         """
-        print " Building MSM from \n",map(lambda x: x.filename, self.data)
+        print "\n Building MSM from \n",map(lambda x: x.filename, self.data)
         print "     # states: %g"%(len(self.keys))
         print self.keys
 
@@ -176,8 +176,7 @@ class MSM:
             nproc = mp.cpu_count()
             if len(self.data) < nproc:
                 nproc = len(self.data)
-                print " running on %g processors"%nproc
-        print nproc
+                print "\n    running on %g processors"%nproc
         pool = mp.Pool(processes=nproc)
         mpinput = map(lambda x: [x, self.keys, lagt], self.data)
         result = pool.map(msm_lib.calc_count_worker, mpinput)
@@ -216,18 +215,28 @@ class MSM:
         """ Check connectivity of rate matrix. 
         
         """
-        print "\n checking connectivity"
+        print "\n    checking connectivity"
         D = nx.DiGraph(self.count)
         keep_states = sorted(nx.strongly_connected_components(D)[0])
         keep_keys = map(lambda x: self.keys[x], keep_states)
+        print "          %g states in largest subgraph"%len(keep_keys)
         return keep_states, keep_keys
 
     def calc_trans(self, lagt=None):
-        """ Calculate transition matrix
-        :param lagt:
+        """ Calculate transition matrix.
+
+        Parameters:
+        ----------
+        lagt : float
+            Lag time for construction of MSM.
+
+        Returns:
+        -------
+        trans : array
+            The transition probability matrix.    
+        
         """
         nkeep = len(self.keep_states)
-        print nkeep
         keep_states = self.keep_states
         count = self.count
         trans = np.zeros([nkeep, nkeep], float)
