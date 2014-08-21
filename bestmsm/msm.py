@@ -4,9 +4,12 @@
 ================
 """
 
+import os
 import numpy as np
 import scipy.linalg as scipyla
 import msm_lib
+import tempfile
+import cPickle
 import networkx as nx
 import matplotlib.pyplot as plt
 import multiprocessing as mp
@@ -161,6 +164,7 @@ class MSM:
         # merge state keys from all trajectories
         self.keys = keys
         self.data = data
+        self.lagt = lagt
         self.count = self.calc_count_multi(lagt)
         self.keep_states, self.keep_keys = self.check_connect()
         self.trans = self.calc_trans(lagt)
@@ -176,9 +180,9 @@ class MSM:
             nproc = mp.cpu_count()
             if len(self.data) < nproc:
                 nproc = len(self.data)
-                print "\n    running on %g processors"%nproc
+                print "\n    ...running on %g processors"%nproc
         pool = mp.Pool(processes=nproc)
-        mpinput = map(lambda x: [x, self.keys, lagt], self.data)
+        mpinput = map(lambda x: [x.states, x.dt, self.keys, lagt], self.data)
         result = pool.map(msm_lib.calc_count_worker, mpinput)
         count = reduce(lambda x, y: np.matrix(x) + np.matrix(y), result)
         return np.array(count)
@@ -215,7 +219,7 @@ class MSM:
         """ Check connectivity of rate matrix. 
         
         """
-        print "\n    checking connectivity"
+        print "\n    ...checking connectivity:"
         D = nx.DiGraph(self.count)
         keep_states = sorted(nx.strongly_connected_components(D)[0])
         keep_keys = map(lambda x: self.keys[x], keep_states)
@@ -298,13 +302,16 @@ class MSM:
         peqT = rvecsT[:,ieqT]/peqT_sum
         return tauT, peqT, rvecsT, lvecsT
 
-    def boots(self, nboots=None, plot=False):
+    def boots(self, nboots=None, nproc=None, plot=False):
         """ Bootstrap the simulation data to calculate errors
 
         Parameters:
         -----------
         nboots : int
             Number of bootstrap samples
+
+        nproc : int
+            Number of processors to use
 
         plot : bool
             Whether we want to plot the distribution of tau / peq
@@ -321,35 +328,63 @@ class MSM:
 
         print "\n Doing bootstrap tests:"
         # how much data is here?
-        ntraj = len(self.data) 
-        ltraj = [len(x.states)*x.dt for x in self.data]
+        # generate trajectory list for easy handling 
+        trajs = [[x.states, x.dt] for x in self.data]
+        ltraj = [len(x[0])*x[1] for x in trajs]
         timetot = np.sum(ltraj) # total simulation time
+        ncount = np.sum(self.count)
         print "     Total time: %g"%timetot
-        print "     Length of trajectories:",ltraj
+        print "     Number of trajectories: %g"%len(trajs)
+        print "     Total number of transitions: %g"%ncount
 
         # how many resamples?
         if not nboots:
             nboots = 100
+        print "     Number of resamples: %g"%nboots
 
         # how many trajectory fragments?
-        ltraj_mode = np.mode(ltraj)
-        if ntraj < nboots/5:
+        ltraj_median = np.median(ltraj)
+        if ltraj_median > timetot/10.:
+            print "     ...splitting trajectories"
+        while ltraj_median > timetot/10.:
+            trajs_new = []
             #cut trajectories in chunks
-            
-        else: 
-            # maybe we can directly pool from trajectories
+            for x in trajs:
+                lx = len(x[0])
+                trajs_new.append([x[0][:lx/2], x[1]])
+                trajs_new.append([x[0][lx/2:], x[1]])
+            trajs = trajs_new
+            ltraj = [len(x[0])*x[1] for x in trajs]
+            ltraj_median = np.median(ltraj)
 
+        # save trajs
+        fd, filetmp = tempfile.mkstemp()
+        file = os.fdopen(fd, 'wb')   
+        cPickle.dump(trajs, file, protocol=cPickle.HIGHEST_PROTOCOL)
+        file.close()
 
-#        while True:
- #           timeboots = timetot/(2*ntraj) # length of trajectory fragments
-        #    #print resamples,timeboots
-#        #    if ltraj%timeboots != 0:
-#        #        resamples +=1
-#        #    else:
-#        #        break
-#        print "    total number of trajectories: %g"%ntraj
-#        print "    length of each trajectory (frames): %g"%ltraj
-#        print "    total simulation time (frames): %g"%timetot
-#        print "    length of fragments in pool (frames): %g"%timeboots
-#        print "    number of resamples: %g"%resamples
-#        print "    doing bootstrap analysis"
+        print "     Number of trajectories: %g"%len(trajs)
+        print "     Median of trajectory length: %g"%ltraj_median
+
+        # now do it
+        print "     ...doing bootstrap analysis"
+        # multiprocessing options
+        if not nproc:           
+            nproc = mp.cpu_count()
+        print "     ...running on %g processors"%nproc
+        pool = mp.Pool(processes=nproc)
+        multi_boots_input = map(lambda x: [filetmp, self.keys, self.lagt, ncount], 
+                range(nboots))
+        # TODO: find more elegant way to pass arguments
+        result = pool.map(msm_lib.do_boots_worker, multi_boots_input)
+        tauT = [x[0] for x in result]
+        peqT = [x[1] for x in result]
+        # TODO. rewrite so that auxiliary functions are in msm_lib
+        tau_err = []
+        for n in range(len(self.keys)-1):
+            tau_err.append(np.std([x[n] for x in tauT]))
+        peq_err = []
+        for n in range(len(self.keys)):
+            peq_err.append(np.std([x[n] for x in peqT]))
+        print tau_err 
+        print peq_err

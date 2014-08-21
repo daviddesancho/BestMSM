@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
 import numpy as np
+import networkx as nx
 import os,sys,math,copy #,numarray,linalg
 import itertools,operator
 from scipy import linalg as scipyla
 import multiprocessing as mp
+import cPickle
 
 def difference(k1,k2):
     l = len(k1)
@@ -307,21 +309,20 @@ def partial_flux(states,peq,K,pfold,d_peq,d_K,d_pfold,elem,target):
     return sum_d_flux
 
 def calc_count_worker(x):
-    traj = x[0]
-    print "# Process %s running on file %s"%(mp.current_process(), traj)
-    keys = x[1]
+    states = x[0]
+    dt = x[1]
+    #print "# Process %s running on file %s"%(mp.current_process(), traj)
+    keys = x[2]
     nkeys = len(keys)
-    lagt = x[2]
-    dt = traj.dt
-    raw = traj.states
-    nraw = len(raw)
+    lagt = x[3]
+    nstates = len(states)
     pstate = "NULL"
     lag = int(lagt/dt) # number of frames for lag time
-    count = np.zeros([nkeys,nkeys], int)
-    for i in range(0, nraw-lag, lag):
+    count = np.zeros([nkeys,nkeys], np.int32)
+    for i in range(0, nstates-lag, lag):
         j = i + lag
-        state_i = raw[i]
-        state_j = raw[j]
+        state_i = states[i]
+        state_j = states[j]
         if state_i in keys:
             idx_i = keys.index(state_i)
         if state_j in keys:
@@ -330,4 +331,58 @@ def calc_count_worker(x):
             count[idx_j][idx_i] += 1
         except UnboundLocalError:
             pass
-    return count 
+    return count
+
+def do_boots_worker(x):
+    """ Worker function for parallel bootstrapping.
+
+    Parameters:
+    ----------
+    x : list
+        A list containing the trajectory filename, the states, the lag time
+        and the total number of transitions.
+ 
+    """
+    filetmp, keys, lagt, ncount = x
+    nkeys = len(keys)
+    file = open(filetmp, 'rb')
+    trans = cPickle.load(file)
+    file.close()
+    ltrans = len(trans)
+
+    ncount_boots = 0
+    count = np.zeros([nkeys, nkeys], np.int32)
+    while ncount_boots < ncount:
+        itrans = np.random.randint(ltrans)
+        count_inp = [trans[itrans][0], trans[itrans][1], keys, lagt]
+        c = calc_count_worker(count_inp)
+        count += np.matrix(c)
+        ncount_boots += np.sum(c)
+
+    D = nx.DiGraph(count)
+    keep_states = sorted(nx.strongly_connected_components(D)[0])
+    keep_keys = map(lambda x: keys[x], keep_states)
+    nkeep = len(keep_keys)
+    trans = np.zeros([nkeep, nkeep], float)
+    for i in range(nkeep):
+        ni = reduce(lambda x, y: x + y, map(lambda x: 
+            count[keep_states[x]][keep_states[i]], range(nkeep)))
+        for j in range(nkeep):
+            trans[j][i] = float(count[keep_states[j]][keep_states[i]])/float(ni)
+
+    evalsT, rvecsT = scipyla.eig(trans, left=False)
+    elistT = []
+    for i in range(nkeep):
+        elistT.append([i,np.real(evalsT[i])])
+    elistT.sort(esort)
+    
+    tauT = []
+    for i in range(1,nkeep):
+        iT, lamT = elistT[i]
+        tauT.append(-lagt/np.log(lamT))
+    ieqT, eT = elistT[0]
+    peqT_sum = reduce(lambda x,y: x + y, map(lambda x: rvecsT[x,ieqT],
+             range(nkeep)))
+    peqT = rvecsT[:,ieqT]/peqT_sum
+
+    return tauT, peqT, keep_keys 
