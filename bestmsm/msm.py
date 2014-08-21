@@ -297,3 +297,59 @@ class MSM:
              range(nkeep)))
         peqT = rvecsT[:,ieqT]/peqT_sum
         return tauT, peqT, rvecsT, lvecsT
+
+    def boots(self, nboots=None, plot=False):
+        """ Bootstrap the simulation data to calculate errors
+
+        Parameters:
+        -----------
+        nboots : int
+            Number of bootstrap samples
+
+        plot : bool
+            Whether we want to plot the distribution of tau / peq
+        
+        Returns:
+        --------
+        tau_err : array
+            Errors for the relaxation times
+
+        peq_err : array
+            Errors for the equilibrium probabilities
+
+        """
+
+        print "\n Doing bootstrap tests:"
+        # how much data is here?
+        ntraj = len(self.data) 
+        ltraj = [len(x.states)*x.dt for x in self.data]
+        timetot = np.sum(ltraj) # total simulation time
+        print "     Total time: %g"%timetot
+        print "     Length of trajectories:",ltraj
+
+        # how many resamples?
+        if not nboots:
+            nboots = 100
+
+        # how many trajectory fragments?
+        ltraj_mode = np.mode(ltraj)
+        if ntraj < nboots/5:
+            #cut trajectories in chunks
+            
+        else: 
+            # maybe we can directly pool from trajectories
+
+
+#        while True:
+ #           timeboots = timetot/(2*ntraj) # length of trajectory fragments
+        #    #print resamples,timeboots
+#        #    if ltraj%timeboots != 0:
+#        #        resamples +=1
+#        #    else:
+#        #        break
+#        print "    total number of trajectories: %g"%ntraj
+#        print "    length of each trajectory (frames): %g"%ltraj
+#        print "    total simulation time (frames): %g"%timetot
+#        print "    length of fragments in pool (frames): %g"%timeboots
+#        print "    number of resamples: %g"%resamples
+#        print "    doing bootstrap analysis"
