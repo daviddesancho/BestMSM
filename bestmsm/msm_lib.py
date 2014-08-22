@@ -349,7 +349,10 @@ def do_boots_worker(x):
     trans = cPickle.load(file)
     file.close()
     ltrans = len(trans)
-
+    # For multiple processes to be independent we seed with pid
+    #print 'process id:', os.getpid()
+    pid = os.getpid()
+    np.random.seed(pid)
     ncount_boots = 0
     count = np.zeros([nkeys, nkeys], np.int32)
     while ncount_boots < ncount:

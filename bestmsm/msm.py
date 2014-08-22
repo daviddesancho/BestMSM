@@ -5,6 +5,7 @@
 """
 
 import os
+import sys
 import numpy as np
 import scipy.linalg as scipyla
 import msm_lib
@@ -339,7 +340,7 @@ class MSM:
 
         # how many resamples?
         if not nboots:
-            nboots = 10
+            nboots = 100
         print "     Number of resamples: %g"%nboots
 
         # how many trajectory fragments?
@@ -377,13 +378,53 @@ class MSM:
                 range(nboots))
         # TODO: find more elegant way to pass arguments
         result = pool.map(msm_lib.do_boots_worker, multi_boots_input)
+
         tauT_boots = [x[0] for x in result]
         peqT_boots = [x[1] for x in result]
         keep_keys_boots = [x[2] for x in result]
         # TODO. rewrite so that auxiliary functions are in msm_lib
-        tau_err = []
+        tau_ave = []
+        tau_std = []
+        tau_keep = []
         for n in range(len(self.keys)-1):
-            tau_err.append(np.std([x[n] for x in tauT]))
-        peq_err = []
-        for n in range(len(self.keys)):
-            print zip(peqT, keep_keys_boots)
+            try:
+                data = [x[n] for x in tauT_boots if not np.isnan(x[n])]
+                tau_ave.append(np.mean(data))
+                tau_std.append(np.std(data))
+                tau_keep.append(data)
+            except IndexError:
+                continue
+        peq_ave = []
+        peq_std = []
+        peq_indexes = []
+        peq_keep = []
+        for k in self.keys:
+            peq_indexes.append([x.index(k) if k in x else None for x in keep_keys_boots])
+
+        for k in self.keys:
+            l = self.keys.index(k)
+            data = []
+            for n in range(nboots):
+                if peq_indexes[l][n] is not None:
+                    data.append(peqT_boots[n][peq_indexes[l][n]])
+            try:
+                peq_ave.append(np.mean(data))
+                peq_std.append(np.std(data))
+                peq_keep.append(data)
+            except RuntimeWarning:
+                peq_ave.append(0.)
+                peq_std.append(0.)
+
+        if plot:
+            data = np.array(data)
+            fig = plt.figure()
+            fig.set_facecolor('white')
+            ax = fig.add_subplot(2,1,1)
+            for n in range(1):
+                ax.hist(peq_keep[n], 20)
+            ax = fig.add_subplot(2,1,2)
+            for n in range(1):
+                ax.hist(np.log(tau_keep[n]), 20)
+            plt.show()
+
+        return tau_ave, tau_std, peq_ave, peq_std
