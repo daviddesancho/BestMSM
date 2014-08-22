@@ -339,7 +339,7 @@ class MSM:
 
         # how many resamples?
         if not nboots:
-            nboots = 100
+            nboots = 10
         print "     Number of resamples: %g"%nboots
 
         # how many trajectory fragments?
@@ -377,14 +377,13 @@ class MSM:
                 range(nboots))
         # TODO: find more elegant way to pass arguments
         result = pool.map(msm_lib.do_boots_worker, multi_boots_input)
-        tauT = [x[0] for x in result]
-        peqT = [x[1] for x in result]
+        tauT_boots = [x[0] for x in result]
+        peqT_boots = [x[1] for x in result]
+        keep_keys_boots = [x[2] for x in result]
         # TODO. rewrite so that auxiliary functions are in msm_lib
         tau_err = []
         for n in range(len(self.keys)-1):
             tau_err.append(np.std([x[n] for x in tauT]))
         peq_err = []
         for n in range(len(self.keys)):
-            peq_err.append(np.std([x[n] for x in peqT]))
-        print tau_err 
-        print peq_err
+            print zip(peqT, keep_keys_boots)
