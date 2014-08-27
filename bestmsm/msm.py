@@ -4,9 +4,13 @@
 ================
 """
 
+import os
+import sys
 import numpy as np
 import scipy.linalg as scipyla
 import msm_lib
+import tempfile
+import cPickle
 import networkx as nx
 import matplotlib.pyplot as plt
 import multiprocessing as mp
@@ -73,7 +77,6 @@ class MasterMSM:
         """
         print "\n Building MSM from \n",map(lambda x: x.filename, self.data)
         print "     # states: %g"%(len(self.keys))
-        print self.keys
 
     def do_msm(self, lagt):
         """ Construct MSM for specific value of lag time.
@@ -99,7 +102,9 @@ class MasterMSM:
         N: int
             The number of modes for which we are building the MSM.
 
-        Returns : dict
+        Returns: 
+        -------
+        msm : dict
             A dictionary with the multiple instances of the MSM class.
 
         """
@@ -124,12 +129,31 @@ class MasterMSM:
             data = np.array(data)
             fig, ax = plt.subplots(facecolor='white')
             for n in range(N):
-                ax.loglog(data[:,0], data[:,n+1], label=n)
+                ax.plot(data[:,0], data[:,n+1], label=n)
             ax.set_xlabel(r'Time', fontsize=16)
             ax.set_ylabel(r'$\tau$', fontsize=16)
             plt.show()
 
         return msms
+
+    def do_pcca(self, lagt=10, N=2, optim=True):
+        """ Do PCCA clustering
+
+        Parameters:
+        -----------
+        lagt : float
+            The lag time.
+
+        N : int
+            The number of clusters.
+
+        optim : bool
+            Whether optimization of the clustering is desired.
+
+        Returns:
+        --------
+
+        """
 
 class MSM:
     """
@@ -157,29 +181,37 @@ class MSM:
         
     """
 
-    def __init__(self, data, keys=None, lagt=None):
+    def __init__(self, data, keys=None, lagt=None, evecs=False):
         # merge state keys from all trajectories
         self.keys = keys
         self.data = data
+        self.lagt = lagt
         self.count = self.calc_count_multi(lagt)
         self.keep_states, self.keep_keys = self.check_connect()
         self.trans = self.calc_trans(lagt)
         self.rate = self.calc_rate(lagt)
-        self.tauT, self.peqT, self.rvecsT, self.lvecsT = \
-            self.calc_eigs(lagt)
+        if not evecs:
+            self.tauT, self.peqT = self.calc_eigs(lagt=lagt)
+        else:
+            self.tauT, self.peqT, self.rvecsT, self.lvecsT = \
+                    self.calc_eigs(lagt=lagt, evecs=True)
 
     def calc_count_multi(self, lagt=None, nproc=None):
         """ Calculate transition count matrix in parallel 
         
         """
+
         if not nproc:           
             nproc = mp.cpu_count()
             if len(self.data) < nproc:
                 nproc = len(self.data)
-                print "\n    running on %g processors"%nproc
+                print "\n    ...running on %g processors"%nproc
         pool = mp.Pool(processes=nproc)
-        mpinput = map(lambda x: [x, self.keys, lagt], self.data)
+        mpinput = map(lambda x: [x.states, x.dt, self.keys, lagt], self.data)
         result = pool.map(msm_lib.calc_count_worker, mpinput)
+        pool.close()
+        pool.join()
+
         count = reduce(lambda x, y: np.matrix(x) + np.matrix(y), result)
         return np.array(count)
  
@@ -187,7 +219,7 @@ class MSM:
         """ Calculate transition count matrix sequentially 
         
         """
-        print self.keys
+
         keys = self.keys
         nkeys = len(keys)
         count = np.zeros([nkeys,nkeys], int)
@@ -215,10 +247,12 @@ class MSM:
         """ Check connectivity of rate matrix. 
         
         """
-        print "\n    checking connectivity"
+
+        print "\n    ...checking connectivity:"
         D = nx.DiGraph(self.count)
         keep_states = sorted(nx.strongly_connected_components(D)[0])
-        keep_keys = map(lambda x: self.keys[x], keep_states)
+        keep_states_filtered = filter(lambda x: self.count[x][x] > 0, keep_states) 
+        keep_keys = map(lambda x: self.keys[x], keep_states_filtered)
         print "          %g states in largest subgraph"%len(keep_keys)
         return keep_states, keep_keys
 
@@ -236,6 +270,7 @@ class MSM:
             The transition probability matrix.    
         
         """
+
         nkeep = len(self.keep_states)
         keep_states = self.keep_states
         count = self.count
@@ -258,9 +293,32 @@ class MSM:
             rate[i][i] = -(np.sum(rate[:i,i]) + np.sum(rate[i+1:,i]))
         return rate
 
-    def calc_eigs(self, lagt=None):
+    def calc_eigs(self, lagt=None, evecs=False):
         """ Calculate eigenvalues and eigenvectors
-        :param lagt:
+        
+        Parameters:
+        -----------
+
+        lagt : float
+            Lag time used for constructing MSM.
+
+        evecs : bool
+            Whether we want eigenvectors or not.
+
+        Returns:
+        -------
+        tauT : numpy array
+            Relaxation times from T.
+
+        peqT : numpy array
+            Equilibrium probabilities from T.
+        
+        rvecsT : numpy array, optional
+            Right eigenvectors of T, sorted.
+        
+        lvecsT : numpy array, optional
+            Left eigenvectors of T, sorted.
+
         """
 
         evalsK, lvecsK, rvecsK = \
@@ -281,10 +339,10 @@ class MSM:
         # calculate relaxation times from K and T
         tauK = []
         tauT = []
-        for i in range(1,nkeep):
-            iiK,lamK = elistK[i]
+        for i in range(1, nkeep):
+            iiK, lamK = elistK[i]
             tauK.append(-1./lamK)
-            iT, lamT = elistT[i]
+            iiT, lamT = elistT[i]
             tauT.append(-lagt/np.log(lamT))
 
         # equilibrium probabilities
@@ -296,4 +354,148 @@ class MSM:
         peqT_sum = reduce(lambda x,y: x + y, map(lambda x: rvecsT[x,ieqT],
              range(nkeep)))
         peqT = rvecsT[:,ieqT]/peqT_sum
-        return tauT, peqT, rvecsT, lvecsT
+
+        if not evecs:
+            return tauT, peqT
+        else:
+            # sort eigenvectors
+            rvecsT_sorted = np.zeros((nkeep, nkeep), float)
+            lvecsT_sorted = np.zeros((nkeep, nkeep), float)
+            for i in range(nkeep):
+                iiT, lamT = elistT[i]
+                rvecsT_sorted[:,i] = rvecsT[:,iiT]
+                lvecsT_sorted[:,i] = lvecsT[:,iiT]
+            return tauT, peqT, rvecsT_sorted, lvecsT_sorted
+
+    def boots(self, nboots=None, nproc=None, plot=False):
+        """ Bootstrap the simulation data to calculate errors
+
+        Parameters:
+        -----------
+        nboots : int
+            Number of bootstrap samples
+
+        nproc : int
+            Number of processors to use
+
+        plot : bool
+            Whether we want to plot the distribution of tau / peq
+        
+        Returns:
+        --------
+        tau_err : array
+            Errors for the relaxation times
+
+        peq_err : array
+            Errors for the equilibrium probabilities
+
+        """
+
+        print "\n Doing bootstrap tests:"
+        # how much data is here?
+        # generate trajectory list for easy handling 
+        trajs = [[x.states, x.dt] for x in self.data]
+        ltraj = [len(x[0])*x[1] for x in trajs]
+        timetot = np.sum(ltraj) # total simulation time
+        ncount = np.sum(self.count)
+        print "     Total time: %g"%timetot
+        print "     Number of trajectories: %g"%len(trajs)
+        print "     Total number of transitions: %g"%ncount
+
+        # how many resamples?
+        if not nboots:
+            nboots = 100
+        print "     Number of resamples: %g"%nboots
+
+        # how many trajectory fragments?
+        ltraj_median = np.median(ltraj)
+        if ltraj_median > timetot/10.:
+            print "     ...splitting trajectories"
+        while ltraj_median > timetot/10.:
+            trajs_new = []
+            #cut trajectories in chunks
+            for x in trajs:
+                lx = len(x[0])
+                trajs_new.append([x[0][:lx/2], x[1]])
+                trajs_new.append([x[0][lx/2:], x[1]])
+            trajs = trajs_new
+            ltraj = [len(x[0])*x[1] for x in trajs]
+            ltraj_median = np.median(ltraj)
+
+        # save trajs
+        fd, filetmp = tempfile.mkstemp()
+        file = os.fdopen(fd, 'wb')   
+        cPickle.dump(trajs, file, protocol=cPickle.HIGHEST_PROTOCOL)
+        file.close()
+
+        print "     Number of trajectories: %g"%len(trajs)
+        print "     Median of trajectory length: %g"%ltraj_median
+
+        # now do it
+        print "     ...doing bootstrap analysis"
+        # multiprocessing options
+        if not nproc:           
+            nproc = mp.cpu_count()
+        print "     ...running on %g processors"%nproc
+        pool = mp.Pool(processes=nproc)
+        multi_boots_input = map(lambda x: [filetmp, self.keys, self.lagt, ncount], 
+                range(nboots))
+        # TODO: find more elegant way to pass arguments
+        result = pool.map(msm_lib.do_boots_worker, multi_boots_input)
+        pool.close()
+        pool.join()
+
+        tauT_boots = [x[0] for x in result]
+        peqT_boots = [x[1] for x in result]
+        keep_keys_boots = [x[2] for x in result]
+        # TODO. rewrite so that auxiliary functions are in msm_lib
+        tau_ave = []
+        tau_std = []
+        tau_keep = []
+        for n in range(len(self.keys)-1):
+            try:
+                data = [x[n] for x in tauT_boots if not np.isnan(x[n])]
+                tau_ave.append(np.mean(data))
+                tau_std.append(np.std(data))
+                tau_keep.append(data)
+            except IndexError:
+                continue
+        peq_ave = []
+        peq_std = []
+        peq_indexes = []
+        peq_keep = []
+        for k in self.keys:
+            peq_indexes.append([x.index(k) if k in x else None for x in keep_keys_boots])
+
+        for k in self.keys:
+            l = self.keys.index(k)
+            data = []
+            for n in range(nboots):
+                if peq_indexes[l][n] is not None:
+                    data.append(peqT_boots[n][peq_indexes[l][n]])
+            try:
+                peq_ave.append(np.mean(data))
+                peq_std.append(np.std(data))
+                peq_keep.append(data)
+            except RuntimeWarning:
+                peq_ave.append(0.)
+                peq_std.append(0.)
+
+        if plot:
+            data = np.array(data)
+            fig = plt.figure()
+            fig.set_facecolor('white')
+            ax = fig.add_subplot(2,1,1)
+            binning = np.arange(0, 1, 0.01)
+            for n in range(10):
+                ax.hist(peq_keep[n], bins=binning)
+            ax.set_xlabel(r'$P_{eq}$')
+
+            ax = fig.add_subplot(2,1,2)
+            binning = np.arange(np.log10(np.min(tau_ave)) - 1,np.log10(np.max(tau_ave)) + 1 , 0.05)
+            for n in range(10):
+                ax.hist(np.log10(tau_keep[n]), bins=binning)
+            ax.set_xlabel(r'$\tau$')
+            plt.show()
+
+        return tau_ave, tau_std, peq_ave, peq_std
