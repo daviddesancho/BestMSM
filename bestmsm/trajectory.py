@@ -35,15 +35,19 @@ class TimeSeries:
         Lapse between snapshots
 
     """
-    def __init__(self, filename, keys=None):
-        self.filename = filename
-        self.time, self.states = self.read_traj()
-        self.dt = self.find_dt()
-        if keys is None:
-            self.keys = self.find_keys()
-        else:
-            self.keys = filter(lambda x: x[0] not in ['#', '@'],
-                               open(keys).readlines())
+    def __init__(self, filename=None, keys=None):
+        if filename:
+            self.filename = filename
+            self.time, self.states = self.read_traj()
+            self.dt = self.find_dt()
+            if keys is None:
+                self.keys = self.find_keys()
+            else:
+                self.keys = filter(lambda x: x[0] not in ['#', '@'],
+                         open(keys).readlines())
+        else: 
+            # asume overriding initialization
+            pass
 
     def read_traj(self):
         """	Reads trajectory files assuming two columns: time and state. 
