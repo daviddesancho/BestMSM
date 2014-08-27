@@ -53,16 +53,21 @@ class PCCA(MSM):
 
         """
 
+        # generate eigenvectors in case the MSM does not have them
         if not hasattr(self.parent, 'lvecsT'):
            lagt = self.parent.lagt
            tauT, peqT, self.parent.rvecsT, self.parent.lvecsT = \
                    self.parent.calc_eigs(lagt=lagt, evecs=True)
-
         lvecs = self.parent.lvecsT
+
+        # split in desired number of macrostates
         macros = {}
         macros[0] = self.parent.keep_states 
         for n in range(1, N):
-            macro_new, vals = pcca_lib.split_sign(macros, lvecs[:,n])
+            if method is "robust":
+                macro_new, vals = pcca_lib.split_sigma(macros, lvecs[:,n])
+            elif method is "sign":
+                macro_new, vals = pcca_lib.split_sign(macros, lvecs[:,n])
             macros = copy.deepcopy(macro_new)
         print "\n Initial membership of microstates to macrostates:"
         if len(self.parent.keep_keys) < 100:

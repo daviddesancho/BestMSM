@@ -93,7 +93,7 @@ def split_sign(macro, lvec):
         macro_new[isplit].remove(i)
     return macro_new,vals
 
-def split_sigma(macro,lvec,cut,peq):
+def split_sigma(macro,lvec):
     """ split based on distribution """
     nt = len(macro)
     spread = []
@@ -101,7 +101,7 @@ def split_sigma(macro,lvec,cut,peq):
         spread.append(np.std(lvec[macro[i]]))
     # split macrostates with maximum spread
     isplit = np.argsort(-np.array(spread))[0]
-    print "         macrostate to split: %i"%isplit,spread[isplit]
+    #print "         macrostate to split: %i"%isplit,spread[isplit]
     # split based on distribution
     elems = []
     keep = []
@@ -114,7 +114,7 @@ def split_sigma(macro,lvec,cut,peq):
         keep.append(macro[isplit][i])
     macro_new = copy.deepcopy(macro)
     macro_new[nt] = elems
-    print macro_new
+    #print macro_new
     # update old macrostate
     for i in elems: 
         macro_new[isplit].remove(i)

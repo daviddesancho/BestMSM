@@ -10,5 +10,5 @@ msm_ala5 = msm.MasterMSM([traj_ala5, traj_ala5])
 
 msm_ala5.do_msm(lagt=1)
 
-msmpcca = pcca.PCCA(msm_ala5.msms[1], N=10)
+msmpcca = pcca.PCCA(msm_ala5.msms[1], N=4)
 
