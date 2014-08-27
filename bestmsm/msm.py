@@ -14,8 +14,9 @@ import cPickle
 import networkx as nx
 import matplotlib.pyplot as plt
 import multiprocessing as mp
+#import pcca
 
-class MasterMSM:
+class MasterMSM(object):
     """
     A class for constructing the MSM
 
@@ -136,26 +137,25 @@ class MasterMSM:
 
         return msms
 
-    def do_pcca(self, lagt=10, N=2, optim=True):
-        """ Do PCCA clustering
+#    def do_pcca(self, lagt=10, N=2, optim=True):
+#        """ Do PCCA clustering
+#
+#        Parameters:
+#        -----------
+#        lagt : float
+#            The lag time.
+#
+#        N : int
+#            The number of clusters.
+#
+#        optim : bool
+#            Whether optimization of the clustering is desired.
+#
+#        """
+#
+#        return self.msms[lagt].pcca(lagt=lagt, N=N, optim=optim)
 
-        Parameters:
-        -----------
-        lagt : float
-            The lag time.
-
-        N : int
-            The number of clusters.
-
-        optim : bool
-            Whether optimization of the clustering is desired.
-
-        Returns:
-        --------
-
-        """
-
-class MSM:
+class MSM(object):
     """
     A class for constructing the MSM
 
@@ -201,6 +201,7 @@ class MSM:
         
         """
 
+        print "\n Calculating transition count matrix"
         if not nproc:           
             nproc = mp.cpu_count()
             if len(self.data) < nproc:
@@ -251,8 +252,8 @@ class MSM:
         print "\n    ...checking connectivity:"
         D = nx.DiGraph(self.count)
         keep_states = sorted(nx.strongly_connected_components(D)[0])
-        keep_states_filtered = filter(lambda x: self.count[x][x] > 0, keep_states) 
-        keep_keys = map(lambda x: self.keys[x], keep_states_filtered)
+#        keep_states_filtered = filter(lambda x: self.count[x][x] > 0, keep_states) 
+        keep_keys = map(lambda x: self.keys[x], keep_states)
         print "          %g states in largest subgraph"%len(keep_keys)
         return keep_states, keep_keys
 
@@ -499,3 +500,21 @@ class MSM:
             plt.show()
 
         return tau_ave, tau_std, peq_ave, peq_std
+
+#    def pcca(self, lagt=None, N=2, optim=False):
+#        """ Wrapper for carrying out PCCA clustering
+#
+#        Parameters
+#        ----------
+#        lagt : float
+#            The lag time.
+#
+#        N : int
+#            The number of clusters.
+#
+#        optim : bool
+#            Whether optimization is desired.
+#        
+#        """
+#
+#        return pcca.PCCA(parent=self, lagt=lagt, optim=optim)
