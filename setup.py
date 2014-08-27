@@ -10,7 +10,7 @@ def read(fname):
 
 setup(
 		name='BestMSM',
-		version='0.1dev',
+		version='0.2dev',
 		description='the Best way to make an msm',
 		url='http://github.com/daviddesancho/bestmsm',
 		author='David De Sancho',
