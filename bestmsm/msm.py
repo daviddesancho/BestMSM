@@ -77,7 +77,6 @@ class MasterMSM:
         """
         print "\n Building MSM from \n",map(lambda x: x.filename, self.data)
         print "     # states: %g"%(len(self.keys))
-        print self.keys
 
     def do_msm(self, lagt):
         """ Construct MSM for specific value of lag time.
@@ -103,7 +102,9 @@ class MasterMSM:
         N: int
             The number of modes for which we are building the MSM.
 
-        Returns : dict
+        Returns: 
+        -------
+        msm : dict
             A dictionary with the multiple instances of the MSM class.
 
         """
@@ -128,12 +129,31 @@ class MasterMSM:
             data = np.array(data)
             fig, ax = plt.subplots(facecolor='white')
             for n in range(N):
-                ax.loglog(data[:,0], data[:,n+1], label=n)
+                ax.plot(data[:,0], data[:,n+1], label=n)
             ax.set_xlabel(r'Time', fontsize=16)
             ax.set_ylabel(r'$\tau$', fontsize=16)
             plt.show()
 
         return msms
+
+    def do_pcca(self, lagt=10, N=2, optim=True):
+        """ Do PCCA clustering
+
+        Parameters:
+        -----------
+        lagt : float
+            The lag time.
+
+        N : int
+            The number of clusters.
+
+        optim : bool
+            Whether optimization of the clustering is desired.
+
+        Returns:
+        --------
+
+        """
 
 class MSM:
     """
@@ -161,7 +181,7 @@ class MSM:
         
     """
 
-    def __init__(self, data, keys=None, lagt=None):
+    def __init__(self, data, keys=None, lagt=None, evecs=False):
         # merge state keys from all trajectories
         self.keys = keys
         self.data = data
@@ -170,13 +190,17 @@ class MSM:
         self.keep_states, self.keep_keys = self.check_connect()
         self.trans = self.calc_trans(lagt)
         self.rate = self.calc_rate(lagt)
-        self.tauT, self.peqT, self.rvecsT, self.lvecsT = \
-            self.calc_eigs(lagt)
+        if not evecs:
+            self.tauT, self.peqT = self.calc_eigs(lagt=lagt)
+        else:
+            self.tauT, self.peqT, self.rvecsT, self.lvecsT = \
+                    self.calc_eigs(lagt=lagt, evecs=True)
 
     def calc_count_multi(self, lagt=None, nproc=None):
         """ Calculate transition count matrix in parallel 
         
         """
+
         if not nproc:           
             nproc = mp.cpu_count()
             if len(self.data) < nproc:
@@ -185,6 +209,9 @@ class MSM:
         pool = mp.Pool(processes=nproc)
         mpinput = map(lambda x: [x.states, x.dt, self.keys, lagt], self.data)
         result = pool.map(msm_lib.calc_count_worker, mpinput)
+        pool.close()
+        pool.join()
+
         count = reduce(lambda x, y: np.matrix(x) + np.matrix(y), result)
         return np.array(count)
  
@@ -192,7 +219,7 @@ class MSM:
         """ Calculate transition count matrix sequentially 
         
         """
-        print self.keys
+
         keys = self.keys
         nkeys = len(keys)
         count = np.zeros([nkeys,nkeys], int)
@@ -220,10 +247,12 @@ class MSM:
         """ Check connectivity of rate matrix. 
         
         """
+
         print "\n    ...checking connectivity:"
         D = nx.DiGraph(self.count)
         keep_states = sorted(nx.strongly_connected_components(D)[0])
-        keep_keys = map(lambda x: self.keys[x], keep_states)
+        keep_states_filtered = filter(lambda x: self.count[x][x] > 0, keep_states) 
+        keep_keys = map(lambda x: self.keys[x], keep_states_filtered)
         print "          %g states in largest subgraph"%len(keep_keys)
         return keep_states, keep_keys
 
@@ -241,6 +270,7 @@ class MSM:
             The transition probability matrix.    
         
         """
+
         nkeep = len(self.keep_states)
         keep_states = self.keep_states
         count = self.count
@@ -263,9 +293,32 @@ class MSM:
             rate[i][i] = -(np.sum(rate[:i,i]) + np.sum(rate[i+1:,i]))
         return rate
 
-    def calc_eigs(self, lagt=None):
+    def calc_eigs(self, lagt=None, evecs=False):
         """ Calculate eigenvalues and eigenvectors
-        :param lagt:
+        
+        Parameters:
+        -----------
+
+        lagt : float
+            Lag time used for constructing MSM.
+
+        evecs : bool
+            Whether we want eigenvectors or not.
+
+        Returns:
+        -------
+        tauT : numpy array
+            Relaxation times from T.
+
+        peqT : numpy array
+            Equilibrium probabilities from T.
+        
+        rvecsT : numpy array, optional
+            Right eigenvectors of T, sorted.
+        
+        lvecsT : numpy array, optional
+            Left eigenvectors of T, sorted.
+
         """
 
         evalsK, lvecsK, rvecsK = \
@@ -286,10 +339,10 @@ class MSM:
         # calculate relaxation times from K and T
         tauK = []
         tauT = []
-        for i in range(1,nkeep):
-            iiK,lamK = elistK[i]
+        for i in range(1, nkeep):
+            iiK, lamK = elistK[i]
             tauK.append(-1./lamK)
-            iT, lamT = elistT[i]
+            iiT, lamT = elistT[i]
             tauT.append(-lagt/np.log(lamT))
 
         # equilibrium probabilities
@@ -301,7 +354,18 @@ class MSM:
         peqT_sum = reduce(lambda x,y: x + y, map(lambda x: rvecsT[x,ieqT],
              range(nkeep)))
         peqT = rvecsT[:,ieqT]/peqT_sum
-        return tauT, peqT, rvecsT, lvecsT
+
+        if not evecs:
+            return tauT, peqT
+        else:
+            # sort eigenvectors
+            rvecsT_sorted = np.zeros((nkeep, nkeep), float)
+            lvecsT_sorted = np.zeros((nkeep, nkeep), float)
+            for i in range(nkeep):
+                iiT, lamT = elistT[i]
+                rvecsT_sorted[:,i] = rvecsT[:,iiT]
+                lvecsT_sorted[:,i] = lvecsT[:,iiT]
+            return tauT, peqT, rvecsT_sorted, lvecsT_sorted
 
     def boots(self, nboots=None, nproc=None, plot=False):
         """ Bootstrap the simulation data to calculate errors
@@ -378,6 +442,8 @@ class MSM:
                 range(nboots))
         # TODO: find more elegant way to pass arguments
         result = pool.map(msm_lib.do_boots_worker, multi_boots_input)
+        pool.close()
+        pool.join()
 
         tauT_boots = [x[0] for x in result]
         peqT_boots = [x[1] for x in result]
@@ -420,11 +486,16 @@ class MSM:
             fig = plt.figure()
             fig.set_facecolor('white')
             ax = fig.add_subplot(2,1,1)
-            for n in range(1):
-                ax.hist(peq_keep[n], 20)
+            binning = np.arange(0, 1, 0.01)
+            for n in range(10):
+                ax.hist(peq_keep[n], bins=binning)
+            ax.set_xlabel(r'$P_{eq}$')
+
             ax = fig.add_subplot(2,1,2)
-            for n in range(1):
-                ax.hist(np.log(tau_keep[n]), 20)
+            binning = np.arange(np.log10(np.min(tau_ave)) - 1,np.log10(np.max(tau_ave)) + 1 , 0.05)
+            for n in range(10):
+                ax.hist(np.log10(tau_keep[n]), bins=binning)
+            ax.set_xlabel(r'$\tau$')
             plt.show()
 
         return tau_ave, tau_std, peq_ave, peq_std
