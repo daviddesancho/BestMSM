@@ -12,3 +12,4 @@ msm_ala5.do_msm(lagt=1)
 
 msmpcca = pcca.PCCA(msm_ala5.msms[1], N=4)
 
+msmpcca.optim()
