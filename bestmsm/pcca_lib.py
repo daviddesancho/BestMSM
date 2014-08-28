@@ -146,75 +146,76 @@ def metropolis(delta):
             accept = True
         return accept
 
-def do_mc(macro,count,out,lagt):
-    print "\n optimizing the lumped MSM\n"
-    out.write("#    iter       q \n")
-    nstates = len(count)
-    nt = len(macro) 
-    mcsteps = len(count)*500*nt # mc steps per block
-    mcsteps_max = nt*20000 # maximum number of mc steps 
-    count_mac = map_micro2macro(count,macro)
-    K,T = calc_rate(count_mac,lagt)
-    q =  metastability(T)
-    print " initial:",q
-    print macro
-    q_opt = q
-    macro_opt = copy.deepcopy(macro)
-    cont = True
-    nmc = 0 # number of mc blocks
-    cont = True
-    reject = 0
-    while cont:
-        imc = 0 
-        out.write ("%6i %12.10f\n"%(imc + nmc*mcsteps,q))
-        while imc < mcsteps:
-            # try ramdom insertion of a microstate in a macrostate
-            imac = 0
-            jmac = 0
-            while imc < mcsteps:
-                imc +=1
-                #print "\nStep %i"%imc
-                while True:
-                    # choose microstate to move around
-                    imic = random.choice(range(nstates))
-                    #print "      swapping micro-state: %i"%imic
-                    # find macrostate it belongs to
-                    imac = int([x for x in range(nt) if imic in macro[x]][0])
-                    if len(macro[imac]) > 1:
-                        # choose final macrostate
-                        jmac = random.choice([x for x in range(nt) if x!=imac])
-                        break
-                # move microstate from i to j
-                macro_new = copy.deepcopy(macro)
-                macro_new[imac].remove(imic)
-                macro_new[jmac].append(imic)
-                # calculate transition count matrix for new mapping
-                count_mac_new = map_micro2macro(count,macro_new)
-                Kmacro_new,Tmacro_new = calc_rate(count_mac_new,lagt)
-                # calculate metastability
-                q_new = metastability(Tmacro_new)
-                #print "Q new: %g"%q_new
-                #print "temp: %g ="%temp
-                #print " imc= %g; beta = %g"%(imc,beta)
-                delta = beta(imc,mcsteps)*(q - q_new) # calculate increment (Q is a -Energy)
-                #print delta
-                if metropolis(delta):
-                    #print "ACCEPT"
-                    macro = copy.deepcopy(macro_new)
-                    count_mac = count_mac_new
-                    q = q_new
-                    if q > q_opt:
-                        q_opt = q
-                        macro_opt = copy.deepcopy(macro)
-                else:
-                    reject+=1
-                    #print " REJECT"
-
-                if imc%100==0:
-                    out.write ("%6i %12.10e %12.10e\n"%(imc + nmc*mcsteps,q,1./beta(imc,mcsteps)))
-            nmc +=1
-        cont = False    
-    print " final :",q_opt
-    print macro_opt
-    print " acceptance:",1.-float(reject)/mcsteps
-    return macro_opt
+#def do_mc(macro, count=None, fout="mc.dat", lagt=None):
+#    print "\n Optimizing the lumped MSM\n"
+#    out = open(fout, "w")
+#    out.write("#    iter       q \n")
+#    nstates = len(count)
+#    nt = len(macro) 
+#    mcsteps = len(count)*1000*nt # mc steps per block
+#    mcsteps_max = nt*20000 # maximum number of mc steps 
+#    count_mac = map_micro2macro(count,macro)
+#    K,T = calc_rate(count_mac,lagt)
+#    q =  metastability(T)
+#    print " initial:", q
+#    print macro
+#    q_opt = q
+#    macro_opt = copy.deepcopy(macro)
+#    cont = True
+#    nmc = 0 # number of mc blocks
+#    cont = True
+#    reject = 0
+#    while cont:
+#        imc = 0 
+#        out.write ("%6i %12.10f\n"%(imc + nmc*mcsteps,q))
+#        while imc < mcsteps:
+#            # try ramdom insertion of a microstate in a macrostate
+#            imac = 0
+#            jmac = 0
+#            while imc < mcsteps:
+#                imc +=1
+#                #print "\nStep %i"%imc
+#                while True:
+#                    # choose microstate to move around
+#                    imic = random.choice(range(nstates))
+#                    #print "      swapping micro-state: %i"%imic
+#                    # find macrostate it belongs to
+#                    imac = int([x for x in range(nt) if imic in macro[x]][0])
+#                    if len(macro[imac]) > 1:
+#                        # choose final macrostate
+#                        jmac = random.choice([x for x in range(nt) if x!=imac])
+#                        break
+#                # move microstate from i to j
+#                macro_new = copy.deepcopy(macro)
+#                macro_new[imac].remove(imic)
+#                macro_new[jmac].append(imic)
+#                # calculate transition count matrix for new mapping
+#                count_mac_new = map_micro2macro(count,macro_new)
+#                Kmacro_new,Tmacro_new = calc_rate(count_mac_new,lagt)
+#                # calculate metastability
+#                q_new = metastability(Tmacro_new)
+#                #print "Q new: %g"%q_new
+#                #print "temp: %g ="%temp
+#                #print " imc= %g; beta = %g"%(imc,beta)
+#                delta = beta(imc,mcsteps)*(q - q_new) # calculate increment (Q is a -Energy)
+#                #print delta
+#                if metropolis(delta):
+#                    #print "ACCEPT"
+#                    macro = copy.deepcopy(macro_new)
+#                    count_mac = count_mac_new
+#                    q = q_new
+#                    if q > q_opt:
+#                        q_opt = q
+#                        macro_opt = copy.deepcopy(macro)
+#                else:
+#                    reject+=1
+#                    #print " REJECT"
+#
+#                if imc%100==0:
+#                    out.write ("%6i %12.10e %12.10e\n"%(imc + nmc*mcsteps,q,1./beta(imc,mcsteps)))
+#            nmc +=1
+#        cont = False    
+#    print " final :",q_opt
+#    print macro_opt
+#    print " acceptance:",1.-float(reject)/mcsteps
+#    return macro_opt
