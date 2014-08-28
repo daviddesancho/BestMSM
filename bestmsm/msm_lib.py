@@ -168,7 +168,6 @@ def onrate(states,target,K,peq):
                 kon += K[target,i]*peq[i]
     return kon
 
-
 def run_commit(states,K,peq,FF,UU):
     """ calculate committors and reactive flux """
     nstates = len(states)
@@ -390,3 +389,28 @@ def do_boots_worker(x):
     peqT = rvecsT[:,ieqT]/peqT_sum
 
     return tauT, peqT, keep_keys 
+
+def do_trans(nkeep=None, keep_states=None, count=None):
+
+    """ Calculate transition matrix.
+
+    Parameters:
+    ----------
+    lagt : float
+        Lag time for construction of MSM.
+
+    Returns:
+    -------
+    trans : array
+        The transition probability matrix.    
+    
+    """
+
+    trans = np.zeros([nkeep, nkeep], float)
+    for i in range(nkeep):
+        ni = reduce(lambda x, y: x + y, map(lambda x: 
+            count[keep_states[x]][keep_states[i]], range(nkeep)))
+        for j in range(nkeep):
+            trans[j][i] = float(count[keep_states[j]][keep_states[i]])/float(ni)
+    return trans
+

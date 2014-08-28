@@ -95,7 +95,7 @@ class PCCA(MSM):
         return mappedtraj 
 
     def metastability(self):
-        return pcca_lib.metastability()
+        return pcca_lib.metastability(self.trans)
 
     def optim(self, fout="mc.dat"):
         """ MC optimization using the metastability Q as energy
@@ -107,18 +107,23 @@ class PCCA(MSM):
 
         Returns
         -------
+        macro_opt : dict
+            Dictionary with the membership to macrostates.
         """
 
         print "\n Optimizing the lumped MSM\n"
         out = open(fout, "w")
         out.write("#    iter       q \n")
-        nt = self.N
-        mcsteps = len(self.count)*1000*nt # mc steps per block
-        mcsteps_max = nt*20000 # maximum number of mc steps 
+
+        nmac = self.N
+        nmic = len(self.parent.keys)
+        mcsteps = len(self.count)*1000*nmic # mc steps per block
+        mcsteps_max = nmic*20000 # maximum number of mc steps 
         q =  self.metastability()
         print " initial:", q
         q_opt = q
-        macro_opt = copy.deepcopy(self.macros)
+
+        macro = copy.deepcopy(self.macros)
         cont = True
         nmc = 0 # number of mc blocks
         reject = 0
@@ -131,23 +136,22 @@ class PCCA(MSM):
                 jmac = 0
                 while imc < mcsteps:
                     imc +=1
-                    #print "\nStep %i"%imc
                     while True:
                         # choose microstate to move around
-                        imic = random.choice(range(nstates))
-                       #print "      swapping micro-state: %i"%imic
-                        # find macrostate it belongs to
-                        imac = int([x for x in range(nt) if imic in macro[x]][0])
+                        imic = random.choice(range(nmic))
+                        imac = int([x for x in range(nmac) if imic in macro[x]][0])
                         if len(macro[imac]) > 1:
-                            # choose final macrostate
-                            jmac = random.choice([x for x in range(nt) if x!=imac])
+                            # choose destination macrostate
+                            jmac = random.choice([x for x in range(nmac) if x is not imac])
                             break
                     # move microstate from i to j
                     macro_new = copy.deepcopy(macro)
                     macro_new[imac].remove(imic)
                     macro_new[jmac].append(imic)
-#                    # calculate transition count matrix for new mapping
-#                    count_mac_new = map_micro2macro(count,macro_new)
+                    # calculate transition count matrix for new mapping
+                    count_mac_new = pcca_lib.map_micro2macro(self.parent.count, macro_new)
+                    print count_mac_new
+                    return
 #                    Kmacro_new,Tmacro_new = calc_rate(count_mac_new,lagt)
 #                    # calculate metastability
 #                    q_new = metastability(Tmacro_new)

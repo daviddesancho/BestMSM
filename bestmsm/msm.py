@@ -275,13 +275,7 @@ class MSM(object):
         nkeep = len(self.keep_states)
         keep_states = self.keep_states
         count = self.count
-        trans = np.zeros([nkeep, nkeep], float)
-        for i in range(nkeep):
-            ni = reduce(lambda x, y: x + y, map(lambda x: 
-                count[keep_states[x]][keep_states[i]], range(nkeep)))
-            for j in range(nkeep):
-                trans[j][i] = float(count[keep_states[j]][keep_states[i]])/float(ni)
-        return trans
+        return msm_lib.do_trans(nkeep, keep_states, count)
     
     def calc_rate(self, lagt=None):
         """ Calculate rate matrix using a Taylor series as
