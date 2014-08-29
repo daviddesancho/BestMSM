@@ -88,9 +88,7 @@ class MasterMSM(object):
             The lag time.
 
         """
-
         self.msms[lagt] = MSM(self.data, self.keys, lagt)
-
 
     def chapman_kolmogorov(self, plot=True, N=1):
         """ Carry out Chapman-Kolmogorov test.
@@ -189,7 +187,9 @@ class MSM(object):
         self.count = self.calc_count_multi(lagt)
         self.keep_states, self.keep_keys = self.check_connect()
         self.trans = self.calc_trans(lagt)
-        self.rate = self.calc_rate(lagt)
+        self.rate = self.do_rate(lagt)
+        print self.trans
+        print self.rate
         if not evecs:
             self.tauT, self.peqT = self.calc_eigs(lagt=lagt)
         else:
@@ -277,16 +277,24 @@ class MSM(object):
         count = self.count
         return msm_lib.do_trans(nkeep, keep_states, count)
     
-    def calc_rate(self, lagt=None):
-        """ Calculate rate matrix using a Taylor series as
-        described in De Sancho et al J Chem Theor Comput (2013)
-        :param lagt:
+    def do_rate(self, lagt=None):
+        """ Wrapper for rate calculation using the msm_lib.calc_rate 
+        function.
+
+        Parameters
+        ----------
+        lagt : float
+            The lag time.
+
+        Returns
+        -------
+        array
+            The rate matrix as calculated by msm_lib.calc_rate
+
         """
         nkeep = len(self.keep_states)
-        rate = self.trans/lagt
-        for i in range(nkeep):
-            rate[i][i] = -(np.sum(rate[:i,i]) + np.sum(rate[i+1:,i]))
-        return rate
+        print nkeep
+        return msm_lib.calc_rate(nkeep, self.trans, lagt)
 
     def calc_eigs(self, lagt=None, evecs=False):
         """ Calculate eigenvalues and eigenvectors

@@ -391,7 +391,6 @@ def do_boots_worker(x):
     return tauT, peqT, keep_keys 
 
 def do_trans(nkeep=None, keep_states=None, count=None):
-
     """ Calculate transition matrix.
 
     Parameters:
@@ -414,3 +413,28 @@ def do_trans(nkeep=None, keep_states=None, count=None):
             trans[j][i] = float(count[keep_states[j]][keep_states[i]])/float(ni)
     return trans
 
+def calc_rate(nkeep, trans, lagt):
+    """ Calculate rate matrix from transition matrix.
+    We use the Taylor expansion as described in De Sancho,
+    Mittal and Best, J. Chem. Theory Comput. (2013).
+
+    Parameters
+    ----------
+    nkeep : int
+        Number of states in transition matrix.
+    trans: np.array
+        Transition matrix.
+    lagt : float
+        The lag time.      
+
+    Returns
+    -------
+    rate : np.array
+        The rate matrix.
+
+    """
+    rate = trans/lagt
+    
+    for i in range(nkeep):
+        rate[i][i] = -(np.sum(rate[:i,i]) + np.sum(rate[i+1:,i]))
+    return rate

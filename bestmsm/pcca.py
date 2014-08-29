@@ -4,6 +4,7 @@ import random
 import numpy as np
 from msm import MSM
 import trajectory as traj
+import msm_lib
 import pcca_lib
 
 """ 
@@ -150,9 +151,7 @@ class PCCA(MSM):
                     macro_new[jmac].append(imic)
                     # calculate transition count matrix for new mapping
                     count_mac_new = pcca_lib.map_micro2macro(self.parent.count, macro_new)
-                    print count_mac_new
-                    return
-#                    Kmacro_new,Tmacro_new = calc_rate(count_mac_new,lagt)
+                    Kmacro_new,Tmacro_new = msm_lib.calc_rate(nmac, count_mac_new, self.lagt)
 #                    # calculate metastability
 #                    q_new = metastability(Tmacro_new)
 #                    #print "Q new: %g"%q_new
