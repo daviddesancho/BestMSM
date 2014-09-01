@@ -21,16 +21,12 @@ class TimeSeries:
     filename : str 
         The name of the file to read. It is also used for 
         indexing.
-
     time : list of floats
         Time stamps for time series
-
     states : list
         Time series of states, whatever they are.
-        
     keys : list
         The names of the states.
-
     dt : float
         Lapse between snapshots
 
@@ -43,8 +39,8 @@ class TimeSeries:
             if keys is None:
                 self.keys = self.find_keys()
             else:
-                self.keys = filter(lambda x: x[0] not in ['#', '@'],
-                         open(keys).readlines())
+                self.keys = [x.split()[0] for x in open(keys).readlines() \
+                        if x[0] not in ['#', '@']]
         else: 
             # asume overriding initialization
             pass

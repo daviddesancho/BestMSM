@@ -84,6 +84,14 @@ class PCCA(MSM):
         return macros
 
     def map_trajectory(self):
+        """ Maps trajectory onto the PCCA clusters
+
+        Returns
+        -------
+        mappedtraj : str
+            The mapped trajectory.
+
+        """
         print "\n Mapping trajectory onto macrostates..."
         mappedtraj = []
         keep_states = self.parent.keep_states
@@ -107,10 +115,14 @@ class PCCA(MSM):
         return mappedtraj 
 
     def metastability(self):
+        """ Calculate metastability according to the definition
+        in Chodera et al, J Chem Phys, (2007)
+
+        """
         return pcca_lib.metastability(self.trans)
 
     def optim(self, fout="mc.dat"):
-        """ MC optimization using the metastability Q as energy
+        """ MC optimization using the metastability Q as energy.
         
         Parameters
         ----------
@@ -121,8 +133,8 @@ class PCCA(MSM):
         -------
         macro_opt : dict
             Dictionary with the membership to macrostates.
-        """
 
+        """
         print "\n Optimizing the lumped MSM\n"
         out = open(fout, "w")
         out.write("#    iter       q \n")
