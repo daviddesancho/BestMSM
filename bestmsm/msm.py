@@ -14,8 +14,9 @@ import cPickle
 import networkx as nx
 import matplotlib.pyplot as plt
 import multiprocessing as mp
+#import pcca
 
-class MasterMSM:
+class MasterMSM(object):
     """
     A class for constructing the MSM
 
@@ -87,9 +88,7 @@ class MasterMSM:
             The lag time.
 
         """
-
         self.msms[lagt] = MSM(self.data, self.keys, lagt)
-
 
     def chapman_kolmogorov(self, plot=True, N=1):
         """ Carry out Chapman-Kolmogorov test.
@@ -110,7 +109,7 @@ class MasterMSM:
         """
 
         # defining lag times to produce the MSM
-        lagtimes = self.dt*np.array([1, 2, 5, 10, 20, 50, 100, 200, 500])
+        lagtimes = self.dt*np.array(range(1,20,2))
 
         # create MSMs at multiple lag times
         msms = {}
@@ -136,26 +135,25 @@ class MasterMSM:
 
         return msms
 
-    def do_pcca(self, lagt=10, N=2, optim=True):
-        """ Do PCCA clustering
+#    def do_pcca(self, lagt=10, N=2, optim=True):
+#        """ Do PCCA clustering
+#
+#        Parameters:
+#        -----------
+#        lagt : float
+#            The lag time.
+#
+#        N : int
+#            The number of clusters.
+#
+#        optim : bool
+#            Whether optimization of the clustering is desired.
+#
+#        """
+#
+#        return self.msms[lagt].pcca(lagt=lagt, N=N, optim=optim)
 
-        Parameters:
-        -----------
-        lagt : float
-            The lag time.
-
-        N : int
-            The number of clusters.
-
-        optim : bool
-            Whether optimization of the clustering is desired.
-
-        Returns:
-        --------
-
-        """
-
-class MSM:
+class MSM(object):
     """
     A class for constructing the MSM
 
@@ -188,8 +186,10 @@ class MSM:
         self.lagt = lagt
         self.count = self.calc_count_multi(lagt)
         self.keep_states, self.keep_keys = self.check_connect()
-        self.trans = self.calc_trans(lagt)
-        self.rate = self.calc_rate(lagt)
+        self.trans = self.do_trans(lagt)
+        self.rate = self.do_rate(lagt)
+        print self.trans
+        print self.rate
         if not evecs:
             self.tauT, self.peqT = self.calc_eigs(lagt=lagt)
         else:
@@ -201,6 +201,7 @@ class MSM:
         
         """
 
+        print "\n Calculating transition count matrix..."
         if not nproc:           
             nproc = mp.cpu_count()
             if len(self.data) < nproc:
@@ -251,13 +252,12 @@ class MSM:
         print "\n    ...checking connectivity:"
         D = nx.DiGraph(self.count)
         keep_states = sorted(nx.strongly_connected_components(D)[0])
-        keep_states_filtered = filter(lambda x: self.count[x][x] > 0, keep_states) 
-        keep_keys = map(lambda x: self.keys[x], keep_states_filtered)
+        keep_keys = map(lambda x: self.keys[x], keep_states)
         print "          %g states in largest subgraph"%len(keep_keys)
         return keep_states, keep_keys
 
-    def calc_trans(self, lagt=None):
-        """ Calculate transition matrix.
+    def do_trans(self, lagt=None):
+        """ Wrapper for transition matrix calculation.
 
         Parameters:
         ----------
@@ -266,42 +266,44 @@ class MSM:
 
         Returns:
         -------
-        trans : array
+        array
             The transition probability matrix.    
         
         """
 
+        print "\n Calculating transition matrix ..."
         nkeep = len(self.keep_states)
         keep_states = self.keep_states
         count = self.count
-        trans = np.zeros([nkeep, nkeep], float)
-        for i in range(nkeep):
-            ni = reduce(lambda x, y: x + y, map(lambda x: 
-                count[keep_states[x]][keep_states[i]], range(nkeep)))
-            for j in range(nkeep):
-                trans[j][i] = float(count[keep_states[j]][keep_states[i]])/float(ni)
-        return trans
+        return msm_lib.calc_trans(nkeep, keep_states, count)
     
-    def calc_rate(self, lagt=None):
-        """ Calculate rate matrix using a Taylor series as
-        described in De Sancho et al J Chem Theor Comput (2013)
-        :param lagt:
+    def do_rate(self, lagt=None):
+        """ Wrapper for rate calculation using the msm_lib.calc_rate 
+        function.
+
+        Parameters
+        ----------
+        lagt : float
+            The lag time.
+
+        Returns
+        -------
+        array
+            The rate matrix as calculated by msm_lib.calc_rate
+
         """
+        print "\n Calculating rate matrix ..."
         nkeep = len(self.keep_states)
-        rate = self.trans/lagt
-        for i in range(nkeep):
-            rate[i][i] = -(np.sum(rate[:i,i]) + np.sum(rate[i+1:,i]))
-        return rate
+        print nkeep
+        return msm_lib.calc_rate(nkeep, self.trans, lagt)
 
     def calc_eigs(self, lagt=None, evecs=False):
         """ Calculate eigenvalues and eigenvectors
         
         Parameters:
         -----------
-
         lagt : float
             Lag time used for constructing MSM.
-
         evecs : bool
             Whether we want eigenvectors or not.
 
@@ -309,10 +311,8 @@ class MSM:
         -------
         tauT : numpy array
             Relaxation times from T.
-
         peqT : numpy array
             Equilibrium probabilities from T.
-        
         rvecsT : numpy array, optional
             Right eigenvectors of T, sorted.
         
@@ -320,7 +320,7 @@ class MSM:
             Left eigenvectors of T, sorted.
 
         """
-
+        print "\n Calculating eigenvalues and eigenvectors"
         evalsK, lvecsK, rvecsK = \
                    scipyla.eig(self.rate, left=True)
         evalsT, lvecsT, rvecsT = \
@@ -499,3 +499,21 @@ class MSM:
             plt.show()
 
         return tau_ave, tau_std, peq_ave, peq_std
+
+#    def pcca(self, lagt=None, N=2, optim=False):
+#        """ Wrapper for carrying out PCCA clustering
+#
+#        Parameters
+#        ----------
+#        lagt : float
+#            The lag time.
+#
+#        N : int
+#            The number of clusters.
+#
+#        optim : bool
+#            Whether optimization is desired.
+#        
+#        """
+#
+#        return pcca.PCCA(parent=self, lagt=lagt, optim=optim)

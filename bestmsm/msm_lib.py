@@ -72,9 +72,7 @@ def connect_groups(keep_states,trans):
         leftover_new = filter(lambda x: x not in new_net, leftover)
         connected_groups.append(new_net)
         leftover = copy.deepcopy(leftover_new)
-    
     return connected_groups
-
 
 def isnative(native_string, string):
     s = ""
@@ -167,7 +165,6 @@ def onrate(states,target,K,peq):
             if K[target,i] > 0:
                 kon += K[target,i]*peq[i]
     return kon
-
 
 def run_commit(states,K,peq,FF,UU):
     """ calculate committors and reactive flux """
@@ -390,3 +387,51 @@ def do_boots_worker(x):
     peqT = rvecsT[:,ieqT]/peqT_sum
 
     return tauT, peqT, keep_keys 
+
+def calc_trans(nkeep=None, keep_states=None, count=None):
+    """ Calculate transition matrix.
+
+    Parameters:
+    ----------
+    lagt : float
+        Lag time for construction of MSM.
+
+    Returns:
+    -------
+    trans : array
+        The transition probability matrix.    
+    
+    """
+    trans = np.zeros([nkeep, nkeep], float)
+    for i in range(nkeep):
+        ni = reduce(lambda x, y: x + y, map(lambda x: 
+            count[keep_states[x]][keep_states[i]], range(nkeep)))
+        for j in range(nkeep):
+            trans[j][i] = float(count[keep_states[j]][keep_states[i]])/float(ni)
+    return trans
+
+def calc_rate(nkeep, trans, lagt):
+    """ Calculate rate matrix from transition matrix.
+    We use the Taylor expansion as described in De Sancho,
+    Mittal and Best, J. Chem. Theory Comput. (2013).
+
+    Parameters
+    ----------
+    nkeep : int
+        Number of states in transition matrix.
+    trans: np.array
+        Transition matrix.
+    lagt : float
+        The lag time.      
+
+    Returns
+    -------
+    rate : np.array
+        The rate matrix.
+
+    """
+    rate = trans/lagt
+    
+    for i in range(nkeep):
+        rate[i][i] = -(np.sum(rate[:i,i]) + np.sum(rate[i+1:,i]))
+    return rate
