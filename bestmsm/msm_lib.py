@@ -72,9 +72,7 @@ def connect_groups(keep_states,trans):
         leftover_new = filter(lambda x: x not in new_net, leftover)
         connected_groups.append(new_net)
         leftover = copy.deepcopy(leftover_new)
-    
     return connected_groups
-
 
 def isnative(native_string, string):
     s = ""
@@ -390,7 +388,7 @@ def do_boots_worker(x):
 
     return tauT, peqT, keep_keys 
 
-def do_trans(nkeep=None, keep_states=None, count=None):
+def calc_trans(nkeep=None, keep_states=None, count=None):
     """ Calculate transition matrix.
 
     Parameters:
@@ -404,7 +402,6 @@ def do_trans(nkeep=None, keep_states=None, count=None):
         The transition probability matrix.    
     
     """
-
     trans = np.zeros([nkeep, nkeep], float)
     for i in range(nkeep):
         ni = reduce(lambda x, y: x + y, map(lambda x: 

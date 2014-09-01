@@ -109,7 +109,7 @@ class MasterMSM(object):
         """
 
         # defining lag times to produce the MSM
-        lagtimes = self.dt*np.array([1, 2, 5, 10, 20, 50, 100, 200, 500])
+        lagtimes = self.dt*np.array(range(1,20,2))
 
         # create MSMs at multiple lag times
         msms = {}
@@ -186,7 +186,7 @@ class MSM(object):
         self.lagt = lagt
         self.count = self.calc_count_multi(lagt)
         self.keep_states, self.keep_keys = self.check_connect()
-        self.trans = self.calc_trans(lagt)
+        self.trans = self.do_trans(lagt)
         self.rate = self.do_rate(lagt)
         print self.trans
         print self.rate
@@ -201,7 +201,7 @@ class MSM(object):
         
         """
 
-        print "\n Calculating transition count matrix"
+        print "\n Calculating transition count matrix..."
         if not nproc:           
             nproc = mp.cpu_count()
             if len(self.data) < nproc:
@@ -252,13 +252,12 @@ class MSM(object):
         print "\n    ...checking connectivity:"
         D = nx.DiGraph(self.count)
         keep_states = sorted(nx.strongly_connected_components(D)[0])
-#        keep_states_filtered = filter(lambda x: self.count[x][x] > 0, keep_states) 
         keep_keys = map(lambda x: self.keys[x], keep_states)
         print "          %g states in largest subgraph"%len(keep_keys)
         return keep_states, keep_keys
 
-    def calc_trans(self, lagt=None):
-        """ Calculate transition matrix.
+    def do_trans(self, lagt=None):
+        """ Wrapper for transition matrix calculation.
 
         Parameters:
         ----------
@@ -267,15 +266,16 @@ class MSM(object):
 
         Returns:
         -------
-        trans : array
+        array
             The transition probability matrix.    
         
         """
 
+        print "\n Calculating transition matrix ..."
         nkeep = len(self.keep_states)
         keep_states = self.keep_states
         count = self.count
-        return msm_lib.do_trans(nkeep, keep_states, count)
+        return msm_lib.calc_trans(nkeep, keep_states, count)
     
     def do_rate(self, lagt=None):
         """ Wrapper for rate calculation using the msm_lib.calc_rate 
@@ -292,6 +292,7 @@ class MSM(object):
             The rate matrix as calculated by msm_lib.calc_rate
 
         """
+        print "\n Calculating rate matrix ..."
         nkeep = len(self.keep_states)
         print nkeep
         return msm_lib.calc_rate(nkeep, self.trans, lagt)
@@ -301,10 +302,8 @@ class MSM(object):
         
         Parameters:
         -----------
-
         lagt : float
             Lag time used for constructing MSM.
-
         evecs : bool
             Whether we want eigenvectors or not.
 
@@ -312,10 +311,8 @@ class MSM(object):
         -------
         tauT : numpy array
             Relaxation times from T.
-
         peqT : numpy array
             Equilibrium probabilities from T.
-        
         rvecsT : numpy array, optional
             Right eigenvectors of T, sorted.
         
@@ -323,7 +320,7 @@ class MSM(object):
             Left eigenvectors of T, sorted.
 
         """
-
+        print "\n Calculating eigenvalues and eigenvectors"
         evalsK, lvecsK, rvecsK = \
                    scipyla.eig(self.rate, left=True)
         evalsT, lvecsT, rvecsT = \
