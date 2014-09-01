@@ -65,7 +65,9 @@ class PCCA(MSM):
 
         # split in desired number of macrostates
         macros = {}
-        macros[0] = self.parent.keep_states 
+        keep_states = self.parent.keep_states
+        keep_keys = self.parent.keep_keys
+        macros[0] = range(len(keep_states))
         for n in range(1, N):
             if method is "robust":
                 macro_new, vals = pcca_lib.split_sigma(macros, lvecs[:,n])
@@ -84,14 +86,23 @@ class PCCA(MSM):
     def map_trajectory(self):
         print "\n Mapping trajectory onto macrostates..."
         mappedtraj = []
+        keep_states = self.parent.keep_states
+        keep_keys = self.parent.keep_keys
         for data in self.parent.data:
             mt = traj.TimeSeries()
             mt.dt = data.dt
             mt.time = data.time
             mt.states = []
             for s in data.states:
-                mt.states.append([k for k, v in self.macros.iteritems() \
-                        if self.parent.keep_keys.index(s) in v][0])
+                try:
+                    mt.states.append([k for k, v in self.macros.iteritems() \
+                           if keep_keys.index(s) in v][0])
+                except ValueError:
+                    #print " not in keep_keys"
+                    try:
+                        prev = mt.states[-1]
+                    except IndexError:
+                        pass
             mappedtraj.append(mt)
         return mappedtraj 
 

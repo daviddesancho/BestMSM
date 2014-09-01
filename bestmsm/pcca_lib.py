@@ -93,9 +93,10 @@ def split_sign(macro, lvec):
         macro_new[isplit].remove(i)
     return macro_new,vals
 
-def split_sigma(macro,lvec):
+def split_sigma(macro, lvec):
     """ split based on distribution """
     nt = len(macro)
+
     spread = []
     for i in macro.keys():
         spread.append(np.std(lvec[macro[i]]))
