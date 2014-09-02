@@ -6,15 +6,15 @@
 
 import os
 import sys
-import numpy as np
-import scipy.linalg as scipyla
-import msm_lib
 import tempfile
 import cPickle
+import numpy as np
 import networkx as nx
+import scipy.linalg as scipyla
 import matplotlib.pyplot as plt
 import multiprocessing as mp
-#import pcca
+import msm_lib
+import visual_lib
 
 class MasterMSM(object):
     """
@@ -294,7 +294,6 @@ class MSM(object):
         """
         print "\n Calculating rate matrix ..."
         nkeep = len(self.keep_states)
-        print nkeep
         return msm_lib.calc_rate(nkeep, self.trans, lagt)
 
     def calc_eigs(self, lagt=None, evecs=False):
@@ -554,12 +553,15 @@ class MSM(object):
             _UU = [self.keep_states.index(x) for x in UU]
         else:
             _UU = [self.keep_states.index(UU)]
-        print _FF, _UU
 
-        try:
-            fout = open(dot, "w")
-            print fout
-        except TypeError:
-            pass 
-        
-        return msm_lib.run_commit(_states, self.rate, self.peqT, _FF, _UU)
+        # do the calculation
+        J, pfold, kf = msm_lib.run_commit(_states, self.rate, self.peqT, _FF, _UU)
+
+        # write graph in dot format
+        if dot:
+            D = nx.DiGraph(J)
+#            visual_lib.write_dot(D, nodeweight=self.peqT, edgeweight=self.trans, out="out.dot")
+            visual_lib.write_dot(D, nodeweight=self.peqT, out="out.dot")
+#            visual_lib.write_dot(D, out="out.dot")
+
+        return J, pfold, kf

@@ -170,10 +170,8 @@ def run_commit(states, K, peq, FF, UU):
     """ calculate committors and reactive flux """
     nstates = len(states)
     # define end-states
-    print "\n calculating committors and reactive flux: \n"
     UUFF = UU+FF
-    print "   definitely FF and UU states"
-    print UUFF
+    print "   definitely FF and UU states", UUFF
     I = filter(lambda x: x not in UU+FF,states)
     NI = len(I)
 
@@ -218,13 +216,13 @@ def run_commit(states, K, peq, FF, UU):
             if j in FF: #  dividing line corresponds to I to F transitions
                 sum_flux += J[j][i]
 
-    print "\n reactive flux: %g"%sum_flux
+    print "   reactive flux: %g"%sum_flux
 #    pU = np.sum(peq[filter(lambda x: x in UU, range(nstates))])
     pU = np.sum(peq[filter(lambda x: pfold[x] < 0.01, range(nstates))])
 
     kf = sum_flux/pU
-    print "\n binding rate: %g"%kf
-    return J, pfold, sum_flux
+    print "   binding rate: %g"%kf
+    return J, pfold, kf
 
 def partial_rate(beta,K,elem,dg):
     """ calculate derivative of rate matrix """
