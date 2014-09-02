@@ -45,7 +45,6 @@ class PCCA(MSM):
         ----------
         N : int
             Number of clusters.
-
         method : str
             The method used for clustering.
 
