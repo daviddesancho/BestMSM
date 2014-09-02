@@ -166,7 +166,7 @@ def onrate(states,target,K,peq):
                 kon += K[target,i]*peq[i]
     return kon
 
-def run_commit(states,K,peq,FF,UU):
+def run_commit(states, K, peq, FF, UU):
     """ calculate committors and reactive flux """
     nstates = len(states)
     # define end-states
@@ -195,7 +195,7 @@ def run_commit(states,K,peq,FF,UU):
     XX = np.dot(Ainv,A)
 
     pfold = np.zeros(nstates,float)
-    for i in range(NI):
+    for i in range(nstates):
         if i in UU:
             pfold[i] = 0.0
         elif i in FF:
@@ -210,7 +210,7 @@ def run_commit(states,K,peq,FF,UU):
         pss[i] = (1-pfold[i])*peq[i]
 
     # flux matrix and reactive flux
-    J = np.zeros([len(states),len(states)],float)
+    J = np.zeros([nstates,nstates],float)
     sum_flux = 0
     for i in range(nstates):
         for j in range(nstates):
@@ -219,11 +219,12 @@ def run_commit(states,K,peq,FF,UU):
                 sum_flux += J[j][i]
 
     print "\n reactive flux: %g"%sum_flux
-    pU = np.sum(peq[filter(lambda x: x not in FF, range(len(states)))])
+#    pU = np.sum(peq[filter(lambda x: x in UU, range(nstates))])
+    pU = np.sum(peq[filter(lambda x: pfold[x] < 0.01, range(nstates))])
+
     kf = sum_flux/pU
-    print pU
     print "\n binding rate: %g"%kf
-    return J,pfold,sum_flux
+    return J, pfold, sum_flux
 
 def partial_rate(beta,K,elem,dg):
     """ calculate derivative of rate matrix """

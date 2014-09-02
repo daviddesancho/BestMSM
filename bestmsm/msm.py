@@ -517,3 +517,49 @@ class MSM(object):
 #        """
 #
 #        return pcca.PCCA(parent=self, lagt=lagt, optim=optim)
+
+
+    def do_pfold(self, FF=None, UU=None, dot=False):
+        """ Wrapper to calculate reactive fluxes and committors using the 
+        Berzhkovskii-Hummer-Szabo method, J Chem Phys (2009)
+        
+        Parameters
+        ----------
+        lagt : float
+            The lag time.
+        FF : list
+            Folded states.
+        UU : list
+            Unfolded states.
+        dot : string
+            Filename to output dot graph.
+
+        Returns
+        -------
+        J : array
+            The flux matrix.
+        pfold : list
+            The values of the committor.
+        kf : float
+            The foldign rate UU -> FF
+
+        """
+        print "\n Calculating commitment probabilities and fluxes..."
+        _states = range(len(self.keep_states))
+        if isinstance(FF, list):
+            _FF = [self.keep_states.index(x) for x in FF]
+        else:
+            _FF = [self.keep_states.index(FF)]
+        if isinstance(UU, list):
+            _UU = [self.keep_states.index(x) for x in UU]
+        else:
+            _UU = [self.keep_states.index(UU)]
+        print _FF, _UU
+
+        try:
+            fout = open(dot, "w")
+            print fout
+        except TypeError:
+            pass 
+        
+        return msm_lib.run_commit(_states, self.rate, self.peqT, _FF, _UU)
