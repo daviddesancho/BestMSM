@@ -11,7 +11,6 @@ import cPickle
 import numpy as np
 import networkx as nx
 import scipy.linalg as scipyla
-import matplotlib.pyplot as plt
 import multiprocessing as mp
 import msm_lib
 import visual_lib
@@ -117,16 +116,9 @@ class MasterMSM(object):
             for n in range(N):
                 dat.append(msms[lagt].tauT[n])
             data.append(dat)
-
         if plot:
-            data = np.array(data)
-            fig, ax = plt.subplots(facecolor='white')
-            for n in range(N):
-                ax.plot(data[:,0], data[:,n+1], label=n)
-            ax.set_xlabel(r'Time', fontsize=16)
-            ax.set_ylabel(r'$\tau$', fontsize=16)
-            plt.show()
-
+            visual_lib.plot_chapman_kolmogorov(data, N)
+   
         return msms
 
 #    def do_pcca(self, lagt=10, N=2, optim=True):
@@ -559,3 +551,11 @@ class MSM(object):
 #            visual_lib.write_dot(D, out="out.dot")
 
         return J, pfold, kf
+
+    def plot(self):
+        """ Wrapper for plotting standard results from MSM.
+
+        """
+        visual_lib.plot_evals(self.tauT)
+        visual_lib.plot_peq(self.peqT)
+        visual_lib.show()

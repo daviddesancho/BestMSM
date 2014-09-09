@@ -16,12 +16,72 @@ for i in range(len(tableau20)):
 
 figsize = (12,14)
 
+def plot_evals(vals, log=False):
+    """ Plot eigenvalues 
 
-def getridofticks():
+    Parameters
+    ----------
+    vals : string
+        Values of relaxation times.
+    
+    """
+    fig, ax = plt.subplots(facecolor='white')
+    if not log:
+        plt.plot(range(1,len(vals)+1), vals, 'o-', color=tableau20[0])
+    else:
+        plt.semilogy(range(1,len(vals)+1), vals, 'o-', color=tableau20[0])
+    ax.set_xlabel(r'$Eigenvalue$', fontsize=18)
+    ax.set_ylabel(r'$\tau$', fontsize=18)
+    plt.draw()
+
+def plot_peq(vals, states=None, log=False):
+    """ Plot equilibrium probabilities.
+
+    Parameters
+    ----------
+    vals : string
+        Values of equilibrium probabilities.
+
+    states : string
+        Names of states.
+    
+    """
+    fig, ax = plt.subplots(facecolor='white')
+    if not log:
+        plt.plot(range(1,len(vals)+1), vals, 'o-', color=tableau20[0])
+    else:
+        plt.semilogy(range(1,len(vals)+1), vals, 'o-', color=tableau20[0])
+    ax.set_xlabel(r'$State$', fontsize=18)
+    ax.set_ylabel(r'$P_{eq}$', fontsize=18)
+    plt.draw()
+
+def plot_chapman_kolmogorov(data, N):
+    """ Plot Chapman-Kolmogorov test results 
+    
+    Parameters
+    ----------
+    data : array
+        An M*N dimensional array with the values of 
+        all M eigenvalues for N different lag times.
+    N : int
+        The number of lag times to plot.
+
+    """
+    fig, ax = plt.subplots(facecolor='white')
+    data = np.array(data)
+    ax.set_xlabel(r'$Eigenvalue$', fontsize=18)
+    ax.set_ylabel(r'$\tau$', fontsize=18)
+    for n in range(N):
+       ax.plot(data[:,0], data[:,n+1], label=n, color=tableau20[n])
+    ax.set_xlabel(r'Time', fontsize=16)
+    ax.set_ylabel(r'$\tau$', fontsize=16)
+    plt.show()
+
+
+def getridofticks(ax):
     """ Ticking only at bottom and left of plot"""
     ax.get_xaxis().tick_bottom()
     ax.get_yaxis().tick_left()
-
 
 def write_dot(D, nodeweight=None, edgeweight=None, out="out.dot"):
     """ Function for printing a graph in dot format
@@ -75,19 +135,5 @@ def write_dot(D, nodeweight=None, edgeweight=None, out="out.dot"):
 
     fout.write("}")
 
-def plot_evals(vals, log=False):
-    """ Plot eigenvalues """
-    fig = plt.figure()
-    ax = plt.add_subplots(1,1,1)
-    getridofticks()
-    if not log:
-        plt.plot(vals)
-    else:
-        plt.semilogy(vals)
-    ax.set_xlabel(r'$Eigenvalue$')
-    ax.set_ylabel(r'$\tau$')
+def show():
     plt.show()
-
-
-
-
