@@ -24,23 +24,18 @@ class MasterMSM(object):
     ----------
     trajectories : list of str
         Set of trajectories used for the construction.
-
     filekeys : str
         A file from which the states are read. If not defined, then
         keys are automatically generated from the time series.
-
 
     Attributes
     ----------
     keys : list of str
         Names of states.
-
     count : np array
         Transition count matrix.
-
     keep_states : list of str
         Names of states after removing not strongly connected sets.
-
     msms : dict
         A dictionary containing MSMs for different lag times.
         
@@ -97,7 +92,6 @@ class MasterMSM(object):
         -----------
         plot : bool
             Whether the lag time dependence of the relaxation times should be plotted.
-
         N: int
             The number of modes for which we are building the MSM.
 
