@@ -209,17 +209,21 @@ class MSM(object):
         """
         print "\n Calculating transition count matrix...\n"
         print "   sliding window option: ", sliding
+
+        # define multiprocessing options
         if not nproc:           
             nproc = mp.cpu_count()
             if len(self.data) < nproc:
                 nproc = len(self.data)
                 print "\n    ...running on %g processors"%nproc
         pool = mp.Pool(processes=nproc)
+        # generate multiprocessing input
         mpinput = map(lambda x: [x.states, x.dt, self.keys, lagt, sliding], self.data)
+        # run counting using multiprocessing
         result = pool.map(msm_lib.calc_count_worker, mpinput)
         pool.close()
         pool.join()
-
+        # add up all independent counts
         count = reduce(lambda x, y: np.matrix(x) + np.matrix(y), result)
         return np.array(count)
  
@@ -524,6 +528,23 @@ class MSM(object):
 #
 #        return pcca.PCCA(parent=self, lagt=lagt, optim=optim)
 
+    def rate_scale(self, iscale=None, scaling=1):
+        """ Scaling columns of the rate matrix by a certain value
+        
+        Parameters
+        ----------
+        states : list
+            The list of state keys we want to scale.
+        val : float
+            The scaling factor.
+
+        """
+        print "\n scaling kiS by %g"%scaling
+        nkeep = len(self.keep_keys)
+        jscale = [self.keep_keys.index(x) for x in iscale]
+        <for j in jscale:
+            for l in range(nkeep):
+                self.rate[l,j] = self.rate[l,j]*scaling
 
     def do_pfold(self, FF=None, UU=None, dot=False):
         """ Wrapper to calculate reactive fluxes and committors using the 
@@ -553,16 +574,17 @@ class MSM(object):
         print "\n Calculating commitment probabilities and fluxes..."
         _states = range(len(self.keep_states))
         if isinstance(FF, list):
-            _FF = [self.keep_states.index(x) for x in FF]
+            _FF = [self.keep_keys.index(x) for x in FF]
         else:
-            _FF = [self.keep_states.index(FF)]
+            _FF = [self.keep_keys.index(FF)]
         if isinstance(UU, list):
-            _UU = [self.keep_states.index(x) for x in UU]
+            _UU = [self.keep_keys.index(x) for x in UU]
         else:
-            _UU = [self.keep_states.index(UU)]
+            _UU = [self.keep_keys.index(UU)]
 
         # do the calculation
-        J, pfold, kf = msm_lib.run_commit(_states, self.rate, self.peqT, _FF, _UU)
+        J, pfold, sum_flux, kf = msm_lib.run_commit(_states, \
+                self.rate, self.peqT, _FF, _UU)
 
         # write graph in dot format
         if dot:
@@ -571,4 +593,40 @@ class MSM(object):
             visual_lib.write_dot(D, nodeweight=self.peqT, out="out.dot")
 #            visual_lib.write_dot(D, out="out.dot")
 
-        return J, pfold, kf
+        return J, pfold, sum_flux, kf
+
+    def sensitivity(FF=None, UU=None, dot=False):
+        """ Sensitivity analysis of the states in the network.
+        De Sancho, Kubas, Blumberger and Best (In preparation, 
+        2014)
+
+        Parameters
+        ----------
+        lagt : float
+            The lag time.
+        FF : list
+            Folded states.
+        UU : list
+            Unfolded states.
+
+        Returns
+        -------
+
+        """
+        nkeep = len(self.keep_states)
+        K = self.rate
+        peq = self.peq
+        J, pfold, sum_flux, kon = self.do_pfold(f, FF=None, UU=None)
+        pu = np.sum([peqK[x] for x in range(nstates) if x not in FF])
+        dJ = []
+        d_pu = []
+        d_kon = []
+        for s in range(nstates):
+            d_K = msm_lib.partial_rate(beta, K, s)
+            d_peq = msm_lib.partial_peq(beta, peqK, s)
+            d_pfold = msm_lib.partial_pfold(range(nstates), K, d_K, FF, UU, s)
+            dJ.append(msm_lib.partial_flux(range(nstates), peqK, K, pfold, d_peq, d_K,
+                d_pfold, FF))
+            d_pu.append(np.sum([d_peq[x] for x in range(nstates) if x not in FF]))
+            d_kon.append((dJ[-1]*pu - sum_flux*d_pu[-1])/pu**2)
+        return dJ, d_peq, d_kon, kon 
