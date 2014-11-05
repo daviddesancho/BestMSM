@@ -8,7 +8,7 @@ from scipy import linalg as scipyla
 import multiprocessing as mp
 import cPickle
 
-def difference(k1,k2):
+def difference(k1, k2):
     l = len(k1)
     diff = 0
     for i in range(l):
@@ -16,7 +16,7 @@ def difference(k1,k2):
             diff+=1
     return diff
 
-def esort(ei,ej):
+def esort(ei, ej):
     i,eval_i = ei
     j,eval_j = ej
 
@@ -27,7 +27,7 @@ def esort(ei,ej):
     else:
         return 0
 
-def find_keys(state_keys,trans,manually_remove):
+def find_keys(state_keys, trans, manually_remove):
     """ eliminate dead ends """
     keep_states = []
     keep_keys = []
@@ -46,7 +46,7 @@ def find_keys(state_keys,trans,manually_remove):
             keep_keys.append(state_keys[i])
     return keep_states,keep_keys
 
-def connect_groups(keep_states,trans):
+def connect_groups(keep_states, trans):
     """ check for connected groups """
     connected_groups = []
     leftover = copy.deepcopy(keep_states)
@@ -83,7 +83,7 @@ def isnative(native_string, string):
             s+="0"
     return s
 
-def mat_mul_v(m,v):
+def mat_mul_v(m, v):
     rows = len(m)
     w = [0]*rows
     irange = range(len(v))
@@ -95,7 +95,7 @@ def mat_mul_v(m,v):
         w[j],sum = sum,0
     return w
 
-def dotproduct(v1,v2,sum=sum,imap=itertools.imap,mul=operator.mul):
+def dotproduct(v1, v2, sum=sum, imap=itertools.imap, mul=operator.mul):
     return sum(imap(mul,v1,v2))
 
 #def rate_analyze(rate):
@@ -122,12 +122,12 @@ def dotproduct(v1,v2,sum=sum,imap=itertools.imap,mul=operator.mul):
 #       PsiL[:,i] = eigvectsym[:,index[i]]/eigvectsym[:,ieq]
 #   return eigval,PsiR,PsiL,eigvectsym,peq
 
-def propagate(rate,t,pini):
+def propagate(rate, t, pini):
     # propagate dynamics using rate matrix exponential
     expkt = scipyla.expm2(rate*t)
     return mat_mul_v(expkt,pini)
 
-def propagate_eig(elist,rvecs,lvecs,t,pini):
+def propagate_eig(elist, rvecs, lvecs, t, pini):
     # propagate dynamics using rate matrix exponential using eigenvalues and eigenvectors 
     nstates = len(pini)
     p = np.zeros((nstates),float)
@@ -146,7 +146,7 @@ def bootsfiles(traj_list_dt):
         traj_list_dt_new.append(traj_list_dt[k])
     return traj_list_dt_new 
 
-def boots_pick(file,blocksize):
+def boots_pick(file, blocksize):
     raw = open(file).readlines()
     lraw = len(raw)
     nblocks = int(lraw/blocksize)
@@ -157,7 +157,7 @@ def boots_pick(file,blocksize):
         ib = 0
     return raw[ib*lblock:(ib+1)*lblock]
 
-def onrate(states,target,K,peq):
+def onrate(states, target, K, peq):
     # steady state rate
     kon = 0.
     for i in states:
@@ -224,7 +224,7 @@ def run_commit(states, K, peq, FF, UU):
     print "   binding rate: %g"%kf
     return J, pfold, kf
 
-def partial_rate(beta,K,elem,dg):
+def partial_rate(beta, K, elem, dg):
     """ calculate derivative of rate matrix """
     nstates = len(K[0])
     d_K = np.zeros((nstates,nstates),float)
@@ -236,7 +236,7 @@ def partial_rate(beta,K,elem,dg):
         d_K[i,i] = -np.sum(d_K[:,i])
     return d_K
 
-def partial_peq(beta,peq,elem):
+def partial_peq(beta, peq, elem):
     """ calculate derivative of equilibrium distribution """
     nstates = len(peq)
     d_peq = []
@@ -247,7 +247,7 @@ def partial_peq(beta,peq,elem):
             d_peq.append(-beta*peq[i]*(1.-peq[i]))
     return d_peq
 
-def partial_pfold(states,K,d_K,FF,UU,elem,dg):
+def partial_pfold(states, K, d_K, FF, UU,elem, dg):
     """ calculate derivative of pfold """
     nstates = len(states)
     # define end-states
@@ -289,7 +289,7 @@ def partial_pfold(states,K,d_K,FF,UU,elem,dg):
             dpfold[i] = x[ii]
     return dpfold
 
-def partial_flux(states,peq,K,pfold,d_peq,d_K,d_pfold,elem,target):
+def partial_flux(states, peq, K, pfold, d_peq, d_K, d_pfold, elem, target):
     """ calculate derivative of flux """
     # flux matrix and reactive flux
     nstates = len(states)
@@ -311,12 +311,16 @@ def calc_count_worker(x):
     keys = x[2]
     nkeys = len(keys)
     lagt = x[3]
+    sliding = x[4]
     nstates = len(states)
     pstate = "NULL"
-    lag = int(lagt/dt) # number of frames for lag time
+    if sliding:
+        lag = 1 # every state is initial state
+    else:
+        lag = int(lagt/dt) # number of frames for lag time
+
     count = np.zeros([nkeys,nkeys], np.int32)
     for i in range(0, nstates-lag, lag):
-#    for i in range(0, nstates-lag):
         j = i + lag
         state_i = states[i]
         state_j = states[j]
