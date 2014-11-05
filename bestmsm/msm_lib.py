@@ -314,13 +314,14 @@ def calc_count_worker(x):
     sliding = x[4]
     nstates = len(states)
     pstate = "NULL"
+    lag = int(lagt/dt) # number of frames for lag time
     if sliding:
-        lag = 1 # every state is initial state
+        slider = 1 # every state is initial state
     else:
-        lag = int(lagt/dt) # number of frames for lag time
+        slider = lag
 
     count = np.zeros([nkeys,nkeys], np.int32)
-    for i in range(0, nstates-lag, lag):
+    for i in range(0, nstates-lag, slider):
         j = i + lag
         state_i = states[i]
         state_j = states[j]
