@@ -345,7 +345,8 @@ def do_boots_worker(x):
         and the total number of transitions.
  
     """
-    filetmp, keys, lagt, ncount = x
+    filetmp, keys, lagt, ncount, slider = x
+
     nkeys = len(keys)
     file = open(filetmp, 'rb')
     trans = cPickle.load(file)
@@ -359,11 +360,10 @@ def do_boots_worker(x):
     count = np.zeros([nkeys, nkeys], np.int32)
     while ncount_boots < ncount:
         itrans = np.random.randint(ltrans)
-        count_inp = [trans[itrans][0], trans[itrans][1], keys, lagt]
+        count_inp = [trans[itrans][0], trans[itrans][1], keys, lagt, slider]
         c = calc_count_worker(count_inp)
         count += np.matrix(c)
         ncount_boots += np.sum(c)
-
     D = nx.DiGraph(count)
     keep_states = sorted(nx.strongly_connected_components(D)[0])
     keep_keys = map(lambda x: keys[x], keep_states)

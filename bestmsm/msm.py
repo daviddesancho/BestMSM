@@ -89,7 +89,7 @@ class MasterMSM(object):
         """
         self.msms[lagt] = MSM(self.data, self.keys, lagt, sliding=sliding)
 
-    def chapman_kolmogorov(self, plot=True, N=1, sliding=True):
+    def chapman_kolmogorov(self, plot=True, N=1, sliding=True, error=True):
         """ Carry out Chapman-Kolmogorov test.
 
         Parameters:
@@ -111,22 +111,27 @@ class MasterMSM(object):
 
         # create MSMs at multiple lag times
         msms = {}
-        data = []
         for lagt in lagtimes:
             print "\n Generating MSM at lag time: %g"%lagt
             msms[lagt] = MSM(self.data, self.keys, lagt, sliding=sliding)
             print "\n    Count matrix:\n", msms[lagt].count
             print "\n    Transition matrix:\n", msms[lagt].trans
-            dat = [lagt]
-            for n in range(N):
-                dat.append(msms[lagt].tauT[n])
-            data.append(dat)
+            if error:               
+                tau_ave, tau_std, peq_ave, peq_std = msms[lagt].boots()
+                msms[lagt].tau_std = tau_std
+                msms[lagt].tau_ave = tau_ave
+                msms[lagt].peq_std = peq_std
+                msms[lagt].peq_ave = peq_std
 
         if plot:
-            data = np.array(data)
             fig, ax = plt.subplots(facecolor='white')
             for n in range(N):
-                ax.plot(data[:,0], data[:,n+1], 'o-', label=n)
+                data = [msms[x].tauT[n] for x in lagtimes]
+                if not error:
+                    ax.plot(lagtimes, data, 'o-', label=n)
+                else:
+                    ebar = [msms[x].tau_std[n] for x in lagtimes]
+                    ax.errorbar(lagtimes, data, yerr=ebar, fmt='o', label=n)
             ax.set_xlabel(r'Time', fontsize=16)
             ax.set_ylabel(r'$\tau$', fontsize=16)
             plt.show()
@@ -368,7 +373,7 @@ class MSM(object):
                 lvecsT_sorted[:,i] = lvecsT[:,iiT]
             return tauT, peqT, rvecsT_sorted, lvecsT_sorted
 
-    def boots(self, nboots=None, nproc=None, plot=False):
+    def boots(self, nboots=None, nproc=None, plot=False, slider=True):
         """ Bootstrap the simulation data to calculate errors
 
         Parameters:
@@ -438,8 +443,9 @@ class MSM(object):
             nproc = mp.cpu_count()
         print "     ...running on %g processors"%nproc
         pool = mp.Pool(processes=nproc)
-        multi_boots_input = map(lambda x: [filetmp, self.keys, self.lagt, ncount], 
-                range(nboots))
+
+        multi_boots_input = map(lambda x: [filetmp, self.keys, self.lagt, ncount, 
+            slider], range(nboots))
         # TODO: find more elegant way to pass arguments
         result = pool.map(msm_lib.do_boots_worker, multi_boots_input)
         pool.close()
