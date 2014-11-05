@@ -45,7 +45,6 @@ class MasterMSM(object):
         A dictionary containing MSMs for different lag times.
         
     """
-
     def __init__(self, trajectories, filekeys=None):
         self.data = trajectories
         try:
@@ -107,9 +106,8 @@ class MasterMSM(object):
             A dictionary with the multiple instances of the MSM class.
 
         """
-
         # defining lag times to produce the MSM
-        lagtimes = self.dt*np.array(range(1,20,2))
+        lagtimes = self.dt*np.array(range(1,50,5))
 
         # create MSMs at multiple lag times
         msms = {}
@@ -132,7 +130,6 @@ class MasterMSM(object):
             ax.set_xlabel(r'Time', fontsize=16)
             ax.set_ylabel(r'$\tau$', fontsize=16)
             plt.show()
-
         return msms
 
 #    def do_pcca(self, lagt=10, N=2, optim=True):
@@ -159,12 +156,18 @@ class MSM(object):
 
     Parameters
     ----------
-    trajectories : list of str
+    data : list of str
         Set of trajectories used for the construction.
+
+    keys : list of str
+        Set of states in the model.
 
     lag : float
         Lag time for building the MSM.
 
+    sliding : bool
+        Whether the method of sliding windows or independent counts 
+        are used.
 
     Attributes
     ----------
@@ -176,15 +179,14 @@ class MSM(object):
 
     keep_states : list of str
         Names of states after removing not strongly connected sets.
-        
-    """
 
-    def __init__(self, data, keys=None, lagt=None, evecs=False):
+    """
+    def __init__(self, data, keys=None, lagt=None, evecs=False, sliding=True):
         # merge state keys from all trajectories
         self.keys = keys
         self.data = data
         self.lagt = lagt
-        self.count = self.calc_count_multi(lagt)
+        self.count = self.calc_count_multi(lagt, sliding)
         self.keep_states, self.keep_keys = self.check_connect()
         self.trans = self.do_trans(lagt)
         self.rate = self.do_rate(lagt)
@@ -196,11 +198,10 @@ class MSM(object):
             self.tauT, self.peqT, self.rvecsT, self.lvecsT = \
                     self.calc_eigs(lagt=lagt, evecs=True)
 
-    def calc_count_multi(self, lagt=None, nproc=None):
+    def calc_count_multi(self, lagt=None, sliding=True, nproc=None):
         """ Calculate transition count matrix in parallel 
         
         """
-
         print "\n Calculating transition count matrix..."
         if not nproc:           
             nproc = mp.cpu_count()
@@ -208,7 +209,7 @@ class MSM(object):
                 nproc = len(self.data)
                 print "\n    ...running on %g processors"%nproc
         pool = mp.Pool(processes=nproc)
-        mpinput = map(lambda x: [x.states, x.dt, self.keys, lagt], self.data)
+        mpinput = map(lambda x: [x.states, x.dt, self.keys, lagt, sliding], self.data)
         result = pool.map(msm_lib.calc_count_worker, mpinput)
         pool.close()
         pool.join()
@@ -216,11 +217,10 @@ class MSM(object):
         count = reduce(lambda x, y: np.matrix(x) + np.matrix(y), result)
         return np.array(count)
  
-    def calc_count_seq(self, lagt=None):
+    def calc_count_seq(self, lagt=None, sliding=True):
         """ Calculate transition count matrix sequentially 
         
         """
-
         keys = self.keys
         nkeys = len(keys)
         count = np.zeros([nkeys,nkeys], int)
@@ -228,7 +228,10 @@ class MSM(object):
         for traj in self.data:
             raw = traj.states
             dt = traj.dt
-            lag = int(lagt/dt) # lag time in frames
+            if sliding:
+                lag = 1 # every state is initial state
+            else:
+                lag = int(lagt/dt) # number of frames for lag time
             nraw = len(raw)
             for i in range(0, nraw-lag, lag):
                 j = i + lag
@@ -270,7 +273,6 @@ class MSM(object):
             The transition probability matrix.    
         
         """
-
         print "\n Calculating transition matrix ..."
         nkeep = len(self.keep_states)
         keep_states = self.keep_states
@@ -389,7 +391,6 @@ class MSM(object):
             Errors for the equilibrium probabilities
 
         """
-
         print "\n Doing bootstrap tests:"
         # how much data is here?
         # generate trajectory list for easy handling 
