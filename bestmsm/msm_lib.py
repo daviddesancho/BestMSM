@@ -315,8 +315,8 @@ def calc_count_worker(x):
     pstate = "NULL"
     lag = int(lagt/dt) # number of frames for lag time
     count = np.zeros([nkeys,nkeys], np.int32)
-#    for i in range(0, nstates-lag, lag):
-    for i in range(0, nstates-lag):
+    for i in range(0, nstates-lag, lag):
+#    for i in range(0, nstates-lag):
         j = i + lag
         state_i = states[i]
         state_j = states[j]
