@@ -78,7 +78,7 @@ class MasterMSM(object):
         print "\n Building MSM from \n",map(lambda x: x.filename, self.data)
         print "     # states: %g"%(len(self.keys))
 
-    def do_msm(self, lagt):
+    def do_msm(self, lagt, sliding=True):
         """ Construct MSM for specific value of lag time.
         
         Parameters:
@@ -87,9 +87,9 @@ class MasterMSM(object):
             The lag time.
 
         """
-        self.msms[lagt] = MSM(self.data, self.keys, lagt)
+        self.msms[lagt] = MSM(self.data, self.keys, lagt, sliding=sliding)
 
-    def chapman_kolmogorov(self, plot=True, N=1):
+    def chapman_kolmogorov(self, plot=True, N=1, sliding=True):
         """ Carry out Chapman-Kolmogorov test.
 
         Parameters:
@@ -114,7 +114,7 @@ class MasterMSM(object):
         data = []
         for lagt in lagtimes:
             print "\n Generating MSM at lag time: %g"%lagt
-            msms[lagt] = MSM(self.data, self.keys, lagt)
+            msms[lagt] = MSM(self.data, self.keys, lagt, sliding=sliding)
             print "\n    Count matrix:\n", msms[lagt].count
             print "\n    Transition matrix:\n", msms[lagt].trans
             dat = [lagt]
@@ -126,7 +126,7 @@ class MasterMSM(object):
             data = np.array(data)
             fig, ax = plt.subplots(facecolor='white')
             for n in range(N):
-                ax.plot(data[:,0], data[:,n+1], label=n)
+                ax.plot(data[:,0], data[:,n+1], 'o-', label=n)
             ax.set_xlabel(r'Time', fontsize=16)
             ax.set_ylabel(r'$\tau$', fontsize=16)
             plt.show()
@@ -186,7 +186,7 @@ class MSM(object):
         self.keys = keys
         self.data = data
         self.lagt = lagt
-        self.count = self.calc_count_multi(lagt, sliding)
+        self.count = self.calc_count_multi(lagt, sliding=sliding)
         self.keep_states, self.keep_keys = self.check_connect()
         self.trans = self.do_trans(lagt)
         self.rate = self.do_rate(lagt)
@@ -202,7 +202,8 @@ class MSM(object):
         """ Calculate transition count matrix in parallel 
         
         """
-        print "\n Calculating transition count matrix..."
+        print "\n Calculating transition count matrix...\n"
+        print "   sliding window option: ", sliding
         if not nproc:           
             nproc = mp.cpu_count()
             if len(self.data) < nproc:
@@ -251,7 +252,6 @@ class MSM(object):
         """ Check connectivity of rate matrix. 
         
         """
-
         print "\n    ...checking connectivity:"
         D = nx.DiGraph(self.count)
         keep_states = sorted(nx.strongly_connected_components(D)[0])
