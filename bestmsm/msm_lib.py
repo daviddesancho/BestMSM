@@ -218,8 +218,7 @@ def run_commit(states, K, peq, FF, UU):
 
     print "   reactive flux: %g"%sum_flux
 #    pU = np.sum(peq[filter(lambda x: x in UU, range(nstates))])
-    pU = np.sum(peq[filter(lambda x: pfold[x] < 0.01, range(nstates))])
-
+    pU = np.sum(peq[filter(lambda x: x in UU, range(len(states)))])
     kf = sum_flux/pU
     print "   binding rate: %g"%kf
     return J, pfold, sum_flux, kf

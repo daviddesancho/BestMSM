@@ -542,7 +542,7 @@ class MSM(object):
         print "\n scaling kiS by %g"%scaling
         nkeep = len(self.keep_keys)
         jscale = [self.keep_keys.index(x) for x in iscale]
-        <for j in jscale:
+        for j in jscale:
             for l in range(nkeep):
                 self.rate[l,j] = self.rate[l,j]*scaling
 
