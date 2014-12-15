@@ -642,6 +642,10 @@ class MSM(object):
 
         Returns
         -------
+        dJ
+        d_peq
+        d_kon
+        kon
 
         """
         nkeep = len(self.keep_states)
@@ -676,3 +680,32 @@ class MSM(object):
             d_kon.append((dJ[-1]*pu - sum_flux*d_pu[-1])/pu**2)
 
         return dJ, d_peq, d_kon, kon 
+
+    def propagateK(self, p0=None, init=None):
+        """ Propagation of rate matrix using matrix exponential 
+        
+        Parameters
+        ----------
+        p0 : string
+            Filename with initial population.
+        init : string
+            State name corresponding to 100% initial population.
+        
+        Returns
+        -------
+        pt : array
+            Population of all states as a function of time.
+        """
+
+        if p0 is not None:
+            try:
+                print " reading initial population from file"
+                print p0
+                pini = [float(y) for y in \
+                        filter(lambda x: x.split()[0] not in ["#","@"],
+                        open(p0, "r").readlines())]
+            except TypeError:
+                print " p0 is not file"
+                print " exiting here"
+                return
+
