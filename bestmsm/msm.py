@@ -87,7 +87,7 @@ class MasterMSM(object):
             The lag time.
 
         """
-        self.msms[lagt] = MSM(self.data, self.keys, lagt, sliding=sliding)
+        self.msms[lagt] = MSM(self.data, keys=self.keys, lagt=lagt, sliding=sliding)
 
     def chapman_kolmogorov(self, plot=True, N=1, sliding=True, error=True):
         """ Carry out Chapman-Kolmogorov test.
@@ -110,32 +110,31 @@ class MasterMSM(object):
         lagtimes = self.dt*np.array(range(1,50,5))
 
         # create MSMs at multiple lag times
-        msms = {}
+        self.msms = {}
         for lagt in lagtimes:
             print "\n Generating MSM at lag time: %g"%lagt
-            msms[lagt] = MSM(self.data, self.keys, lagt, sliding=sliding)
-            print "\n    Count matrix:\n", msms[lagt].count
-            print "\n    Transition matrix:\n", msms[lagt].trans
+            self.msms[lagt] = MSM(self.data, self.keys, lagt, sliding=sliding)
+            print "\n    Count matrix:\n", self.msms[lagt].count
+            print "\n    Transition matrix:\n", self.msms[lagt].trans
             if error:               
-                tau_ave, tau_std, peq_ave, peq_std = msms[lagt].boots()
-                msms[lagt].tau_std = tau_std
-                msms[lagt].tau_ave = tau_ave
-                msms[lagt].peq_std = peq_std
-                msms[lagt].peq_ave = peq_std
+                tau_ave, tau_std, peq_ave, peq_std = self.msms[lagt].boots(nboots=48)
+                self.msms[lagt].tau_std = tau_std
+                self.msms[lagt].tau_ave = tau_ave
+                self.msms[lagt].peq_std = peq_std
+                self.msms[lagt].peq_ave = peq_std
 
         if plot:
             fig, ax = plt.subplots(facecolor='white')
             for n in range(N):
-                data = [msms[x].tauT[n] for x in lagtimes]
+                data = [self.msms[x].tauT[n] for x in lagtimes]
                 if not error:
                     ax.plot(lagtimes, data, 'o-', label=n)
                 else:
-                    ebar = [msms[x].tau_std[n] for x in lagtimes]
+                    ebar = [self.msms[x].tau_std[n] for x in lagtimes]
                     ax.errorbar(lagtimes, data, yerr=ebar, fmt='o', label=n)
             ax.set_xlabel(r'Time', fontsize=16)
             ax.set_ylabel(r'$\tau$', fontsize=16)
             plt.show()
-        return msms
 
 #    def do_pcca(self, lagt=10, N=2, optim=True):
 #        """ Do PCCA clustering
@@ -191,19 +190,24 @@ class MSM(object):
         self.keys = keys
         self.data = data
         self.lagt = lagt
-        self.count = self.calc_count_multi(lagt, sliding=sliding)
+        print sliding
+        self.count = self.calc_count_multi(sliding=sliding)
         self.keep_states, self.keep_keys = self.check_connect()
-        self.trans = self.do_trans(lagt)
-        self.rate = self.do_rate(lagt)
+        self.trans = self.do_trans()
+        self.rate = self.do_rate()
         print self.trans
+        print
         print self.rate
         if not evecs:
-            self.tauT, self.peqT = self.calc_eigs(lagt=lagt)
+            self.tauT, self.peqT = self.calc_eigsT()
+            self.tauK, self.peqK = self.calc_eigsK()
         else:
             self.tauT, self.peqT, self.rvecsT, self.lvecsT = \
-                    self.calc_eigs(lagt=lagt, evecs=True)
+                    self.calc_eigsT(evecs=True)
+            self.tauK, self.peqK, self.rvecsK, self.lvecsK = \
+                    self.calc_eigsK(evecs=True)
 
-    def calc_count_multi(self, lagt=None, sliding=True, nproc=None):
+    def calc_count_multi(self, sliding=True, nproc=None):
         """ Calculate transition count matrix in parallel 
         
         """
@@ -218,7 +222,7 @@ class MSM(object):
                 print "\n    ...running on %g processors"%nproc
         pool = mp.Pool(processes=nproc)
         # generate multiprocessing input
-        mpinput = map(lambda x: [x.states, x.dt, self.keys, lagt, sliding], self.data)
+        mpinput = map(lambda x: [x.states, x.dt, self.keys, self.lagt, sliding], self.data)
         # run counting using multiprocessing
         result = pool.map(msm_lib.calc_count_worker, mpinput)
         pool.close()
@@ -227,7 +231,7 @@ class MSM(object):
         count = reduce(lambda x, y: np.matrix(x) + np.matrix(y), result)
         return np.array(count)
  
-    def calc_count_seq(self, lagt=None, sliding=True):
+    def calc_count_seq(self, sliding=True):
         """ Calculate transition count matrix sequentially 
         
         """
@@ -241,7 +245,7 @@ class MSM(object):
             if sliding:
                 lag = 1 # every state is initial state
             else:
-                lag = int(lagt/dt) # number of frames for lag time
+                lag = int(self.lagt/dt) # number of frames for lag time
             nraw = len(raw)
             for i in range(0, nraw-lag, lag):
                 j = i + lag
@@ -268,13 +272,8 @@ class MSM(object):
         print "          %g states in largest subgraph"%len(keep_keys)
         return keep_states, keep_keys
 
-    def do_trans(self, lagt=None):
+    def do_trans(self):
         """ Wrapper for transition matrix calculation.
-
-        Parameters:
-        ----------
-        lagt : float
-            Lag time for construction of MSM.
 
         Returns:
         -------
@@ -288,14 +287,9 @@ class MSM(object):
         count = self.count
         return msm_lib.calc_trans(nkeep, keep_states, count)
     
-    def do_rate(self, lagt=None):
+    def do_rate(self):
         """ Wrapper for rate calculation using the msm_lib.calc_rate 
         function.
-
-        Parameters
-        ----------
-        lagt : float
-            The lag time.
 
         Returns
         -------
@@ -305,15 +299,66 @@ class MSM(object):
         """
         print "\n Calculating rate matrix ..."
         nkeep = len(self.keep_states)
-        return msm_lib.calc_rate(nkeep, self.trans, lagt)
+        return msm_lib.calc_rate(nkeep, self.trans, self.lagt)
 
-    def calc_eigs(self, lagt=None, evecs=False):
-        """ Calculate eigenvalues and eigenvectors
+    def calc_eigsK(self, evecs=False):
+        """ Calculate eigenvalues and eigenvectors of rate matrix K
         
         Parameters:
         -----------
-        lagt : float
-            Lag time used for constructing MSM.
+        evecs : bool
+            Whether we want eigenvectors or not.
+
+        Returns:
+        -------
+        tauK : numpy array
+            Relaxation times from K.
+        peqK : numpy array
+            Equilibrium probabilities from K.
+        rvecsK : numpy array, optional
+            Right eigenvectors of K, sorted.
+        lvecsK : numpy array, optional
+            Left eigenvectors of K, sorted.
+
+        """
+        print "\n Calculating eigenvalues and eigenvectors of K"
+        evalsK, lvecsK, rvecsK = \
+                   scipyla.eig(self.rate, left=True)
+        # sort modes
+        nkeep = len(self.keep_states)
+        elistK = []
+        for i in range(nkeep):
+            elistK.append([i,np.real(evalsK[i])])
+        elistK.sort(msm_lib.esort)
+
+        # calculate relaxation times from K and T
+        tauK = []
+        for i in range(1, nkeep):
+            iiK, lamK = elistK[i]
+            tauK.append(-1./lamK)
+
+        # equilibrium probabilities
+        ieqK, eK = elistK[0]
+        peqK_sum = reduce(lambda x, y: x + y, map(lambda x: rvecsK[x,ieqK],
+            range(nkeep)))
+        peqK = rvecsK[:,ieqK]/peqK_sum
+        if not evecs:
+            return tauK, peqK
+        else:
+            # sort eigenvectors
+            rvecsK_sorted = np.zeros((nkeep, nkeep), float)
+            lvecsK_sorted = np.zeros((nkeep, nkeep), float)
+            for i in range(nkeep):
+                iiK, lamK = elistK[i]
+                rvecsK_sorted[:,i] = rvecsK[:,iiK]
+                lvecsK_sorted[:,i] = lvecsK[:,iiK]
+            return tauK, peqK, rvecsK_sorted, lvecsK_sorted
+
+    def calc_eigsT(self, evecs=False):
+        """ Calculate eigenvalues and eigenvectors of transition matrix T
+        
+        Parameters:
+        -----------
         evecs : bool
             Whether we want eigenvectors or not.
 
@@ -325,41 +370,27 @@ class MSM(object):
             Equilibrium probabilities from T.
         rvecsT : numpy array, optional
             Right eigenvectors of T, sorted.
-        
         lvecsT : numpy array, optional
             Left eigenvectors of T, sorted.
 
         """
-        print "\n Calculating eigenvalues and eigenvectors"
-        evalsK, lvecsK, rvecsK = \
-                   scipyla.eig(self.rate, left=True)
+        print "\n Calculating eigenvalues and eigenvectors of T"
         evalsT, lvecsT, rvecsT = \
                 scipyla.eig(self.trans, left=True)
-#        # sort modes
+        # sort modes
         nkeep = len(self.keep_states)
-        elistK = []
-        for i in range(nkeep):
-            elistK.append([i,np.real(evalsK[i])])
-        elistK.sort(msm_lib.esort)
         elistT = []
         for i in range(nkeep):
             elistT.append([i,np.real(evalsT[i])])
         elistT.sort(msm_lib.esort)
 
-        # calculate relaxation times from K and T
-        tauK = []
+        # calculate relaxation times 
         tauT = []
         for i in range(1, nkeep):
-            iiK, lamK = elistK[i]
-            tauK.append(-1./lamK)
             iiT, lamT = elistT[i]
-            tauT.append(-lagt/np.log(lamT))
+            tauT.append(-self.lagt/np.log(lamT))
 
         # equilibrium probabilities
-        ieqK, eK = elistK[0]
-        peqK_sum = reduce(lambda x, y: x + y, map(lambda x: rvecsK[x,ieqK],
-            range(nkeep)))
-        peqK = rvecsK[:,ieqK]/peqK_sum
         ieqT, eT = elistT[0]
         peqT_sum = reduce(lambda x,y: x + y, map(lambda x: rvecsT[x,ieqT],
              range(nkeep)))
@@ -377,7 +408,7 @@ class MSM(object):
                 lvecsT_sorted[:,i] = lvecsT[:,iiT]
             return tauT, peqT, rvecsT_sorted, lvecsT_sorted
 
-    def boots(self, nboots=None, nproc=None, plot=False, slider=True):
+    def boots(self, nboots=None, nproc=None, plot=False, slider=False):
         """ Bootstrap the simulation data to calculate errors
 
         Parameters:
@@ -545,6 +576,8 @@ class MSM(object):
         for j in jscale:
             for l in range(nkeep):
                 self.rate[l,j] = self.rate[l,j]*scaling
+#        tauK, peqK, rvecsK_sorted, lvecsK_sorted = self.rate.calc_eigs(lagt=lagt, evecs=False)
+
 
     def do_pfold(self, FF=None, UU=None, dot=False):
         """ Wrapper to calculate reactive fluxes and committors using the 
@@ -584,7 +617,7 @@ class MSM(object):
 
         # do the calculation
         J, pfold, sum_flux, kf = msm_lib.run_commit(_states, \
-                self.rate, self.peqT, _FF, _UU)
+                self.rate, self.peqK, _FF, _UU)
 
         # write graph in dot format
         if dot:
@@ -595,15 +628,13 @@ class MSM(object):
 
         return J, pfold, sum_flux, kf
 
-    def sensitivity(FF=None, UU=None, dot=False):
+    def sensitivity(self, FF=None, UU=None, dot=False):
         """ Sensitivity analysis of the states in the network.
         De Sancho, Kubas, Blumberger and Best (In preparation, 
         2014)
 
         Parameters
         ----------
-        lagt : float
-            The lag time.
         FF : list
             Folded states.
         UU : list
@@ -615,18 +646,33 @@ class MSM(object):
         """
         nkeep = len(self.keep_states)
         K = self.rate
-        peq = self.peq
-        J, pfold, sum_flux, kon = self.do_pfold(f, FF=None, UU=None)
-        pu = np.sum([peqK[x] for x in range(nstates) if x not in FF])
+        peqK = self.peqK
+
+        # calculate pfold 
+        J, pfold, sum_flux, kon = self.do_pfold(FF=FF, UU=UU)
+
+        # 
+        if isinstance(FF, list):
+            _FF = [self.keep_keys.index(x) for x in FF]
+        else:
+            _FF = [self.keep_keys.index(FF)]
+        if isinstance(UU, list):
+            _UU = [self.keep_keys.index(x) for x in UU]
+        else:
+            _UU = [self.keep_keys.index(UU)]
+
+        pu = np.sum([peqK[x] for x in range(nkeep) if x not in _FF])
         dJ = []
         d_pu = []
         d_kon = []
-        for s in range(nstates):
-            d_K = msm_lib.partial_rate(beta, K, s)
-            d_peq = msm_lib.partial_peq(beta, peqK, s)
-            d_pfold = msm_lib.partial_pfold(range(nstates), K, d_K, FF, UU, s)
-            dJ.append(msm_lib.partial_flux(range(nstates), peqK, K, pfold, d_peq, d_K,
-                d_pfold, FF))
-            d_pu.append(np.sum([d_peq[x] for x in range(nstates) if x not in FF]))
+        for s in range(nkeep):
+            d_K = msm_lib.partial_rate(K, s)
+            d_peq = msm_lib.partial_peq(peqK, s)
+            d_pfold = msm_lib.partial_pfold(range(nkeep), K, d_K, _FF, _UU, s)
+            dJ.append(msm_lib.partial_flux(range(nkeep), peqK, K, pfold, \
+                    d_peq, d_K, d_pfold, _FF))
+            d_pu.append(np.sum([d_peq[x] for x in range(nkeep) \
+                    if x not in _FF]))
             d_kon.append((dJ[-1]*pu - sum_flux*d_pu[-1])/pu**2)
+
         return dJ, d_peq, d_kon, kon 

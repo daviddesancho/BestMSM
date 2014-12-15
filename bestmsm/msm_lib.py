@@ -8,6 +8,9 @@ from scipy import linalg as scipyla
 import multiprocessing as mp
 import cPickle
 
+# thermal energy (kJ/mol)
+beta = 1./(8.314e-3*300)
+
 def difference(k1, k2):
     l = len(k1)
     diff = 0
@@ -218,90 +221,11 @@ def run_commit(states, K, peq, FF, UU):
 
     print "   reactive flux: %g"%sum_flux
 #    pU = np.sum(peq[filter(lambda x: x in UU, range(nstates))])
-    pU = np.sum(peq[filter(lambda x: x in UU, range(len(states)))])
+    pU = np.sum(peq[filter(lambda x: x not in FF, range(len(states)))])
+#    pU = np.sum(peq[filter(lambda x: x in UU, range(len(states)))])
     kf = sum_flux/pU
     print "   binding rate: %g"%kf
     return J, pfold, sum_flux, kf
-
-def partial_rate(beta, K, elem, dg):
-    """ calculate derivative of rate matrix """
-    nstates = len(K[0])
-    d_K = np.zeros((nstates,nstates),float)
-    for i in range(nstates):
-        if i != elem:
-            d_K[i,elem] = beta/2.*K[i,elem]*np.exp(beta*dg/2.);
-            d_K[elem,i] = -beta/2.*K[elem,i]*np.exp(beta*dg/2.);
-    for i in range(nstates):
-        d_K[i,i] = -np.sum(d_K[:,i])
-    return d_K
-
-def partial_peq(beta, peq, elem):
-    """ calculate derivative of equilibrium distribution """
-    nstates = len(peq)
-    d_peq = []
-    for i in range(nstates):
-        if i != elem:
-            d_peq.append(beta*peq[i]*peq[elem])
-        else:
-            d_peq.append(-beta*peq[i]*(1.-peq[i]))
-    return d_peq
-
-def partial_pfold(states, K, d_K, FF, UU,elem, dg):
-    """ calculate derivative of pfold """
-    nstates = len(states)
-    # define end-states
-    UUFF = UU+FF
-    I = filter(lambda x: x not in UU+FF, range(nstates))
-    NI = len(I)
-    # calculate committors
-    b = np.zeros([NI], float)
-    A = np.zeros([NI,NI], float)
-    db = np.zeros([NI], float)
-    dA = np.zeros([NI,NI], float)
-    for j_ind in range(NI):
-        j = I[j_ind]
-        sum = 0.
-        sumd = 0.
-        for i in FF:
-            sum+= K[i][j]
-            sumd+= d_K[i][j]
-        b[j_ind] = -sum
-        db[j_ind] = -sumd
-        for i_ind in range(NI):
-            i = I[i_ind]
-            A[j_ind][i_ind] = K[i][j]
-            dA[j_ind][i_ind] = d_K[i][j]
-
-    # solve Ax + Bd(x) = c
-    Ainv = np.linalg.inv(A)
-    pfold = np.dot(Ainv,b)
-    x = np.dot(Ainv,db - np.dot(dA,pfold))
-
-    dpfold = np.zeros(nstates,float)
-    for i in range(nstates):
-        if i in UU:
-            dpfold[i] = 0.0
-        elif i in FF:
-            dpfold[i] = 0.0
-        else:
-            ii = I.index(i)
-            dpfold[i] = x[ii]
-    return dpfold
-
-def partial_flux(states, peq, K, pfold, d_peq, d_K, d_pfold, elem, target):
-    """ calculate derivative of flux """
-    # flux matrix and reactive flux
-    nstates = len(states)
-    sum_d_flux = 0
-    d_J = np.zeros((nstates,nstates),float)
-    for i in range(nstates):
-        for j in range(nstates):
-            d_J[j][i] = d_K[j][i]*peq[i]*(pfold[j]-pfold[i]) + \
-                K[j][i]*d_peq[i]*(pfold[j]-pfold[i]) + \
-                K[j][i]*peq[i]*(d_pfold[j]-d_pfold[i])
-            if j==target and K[j][i]>0: #  dividing line corresponds to I to F transitions                      
-                sum_d_flux += d_J[j][i]
-    return sum_d_flux
 
 def calc_count_worker(x):
     states = x[0]
@@ -439,7 +363,7 @@ def calc_rate(nkeep, trans, lagt):
         rate[i][i] = -(np.sum(rate[:i,i]) + np.sum(rate[i+1:,i]))
     return rate
 
-def partial_rate(beta, K, elem):
+def partial_rate(K, elem):
     """ calculate derivative of rate matrix """
     nstates = len(K[0])
     d_K = np.zeros((nstates,nstates), float)
@@ -451,7 +375,7 @@ def partial_rate(beta, K, elem):
         d_K[i,i] = -np.sum(d_K[:,i])
     return d_K
 
-def partial_peq(beta, peq, elem):
+def partial_peq(peq, elem):
     """ calculate derivative of equilibrium distribution """
     nstates = len(peq)
     d_peq = []
@@ -479,7 +403,7 @@ def partial_pfold(states, K, d_K, FF, UU, elem):
         sum = 0.
         sumd = 0.
         for i in FF:
-            sum+= K[i][j]
+            sum += K[i][j]
             sumd+= d_K[i][j]
         b[j_ind] = -sum
         db[j_ind] = -sumd
