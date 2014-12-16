@@ -642,10 +642,14 @@ class MSM(object):
 
         Returns
         -------
-        dJ
-        d_peq
-        d_kon
-        kon
+        dJ : list
+            Derivative of flux.
+        d_peq : list
+            Derivative of equilibrium populations.
+        d_kon : list
+            Derivative of global rate.
+        kon : float
+            Global rate.
 
         """
         nkeep = len(self.keep_states)
