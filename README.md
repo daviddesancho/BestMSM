@@ -1,3 +1,8 @@
+.. image:: https://landscape.io/github/daviddesancho/BestMSM/master/landscape.svg
+   :target: https://landscape.io/github/daviddesancho/BestMSM/master
+   :alt: Code Health
+
+
 BestMSM
 =======
 bestmsm: is the Best way to make an MSM, or more specifically, the way
