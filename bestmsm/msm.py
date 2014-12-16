@@ -697,14 +697,20 @@ class MSM(object):
         
         Returns
         -------
-        pt : array
+        popul : array
             Population of all states as a function of time.
+        pnorm : array
+            Population of all states as a function of time - normalized.
         """
+         # time for relaxation
+        logt = np.arange(np.log10(self.lagt), 7., 0.25)
+        time = 10**logt
+        ltime = len(time)
 
+        nkeep = len(self.keep_states)
         if p0 is not None:
             try:
-                print " reading initial population from file"
-                print p0
+                print " reading initial population from file: %s"%p0
                 pini = [float(y) for y in \
                         filter(lambda x: x.split()[0] not in ["#","@"],
                         open(p0, "r").readlines())]
@@ -712,4 +718,34 @@ class MSM(object):
                 print " p0 is not file"
                 print " exiting here"
                 return
+        elif init is not None:
+            print " initializing all population in states"
+            print init
+            pini = [self.peqK[x] if self.keep_keys[x] in init else 0. for x in range(nkeep)]
+        # check normalization and size
+        if len(pini) != nkeep:
+            print " initial population vector and state space have different sizes"
+            print " stopping here" 
+            return
+        else:
+            sum_pini = np.sum(pini)
+            pini_norm = [np.float(x)/sum_pini for x in pini]
 
+        # propagate rate matrix : parallel version
+        nproc = mp.cpu_count()
+        pool = mp.Pool(processes=nproc)
+        pool_input = [(self.rate, t, pini_norm) for t in time]
+        popul = pool.map(msm_lib.propagate_worker, tuple(pool_input))
+        pool.close()
+        pool.join()
+
+        ## normalize relaxation
+        #imax = np.argmax(ptot)
+        #maxpop = ptot[imax]
+        #imin = np.argmin(ptot)
+        #minpop = ptot[imin]
+        #if imax < imin:
+        #    pnorm = map(lambda x: (x-minpop)/(maxpop-minpop), ptot)
+        #else:
+        #    pnorm = map(lambda x: 1 - (x-minpop)/(maxpop-minpop), ptot)
+        return time, popul #popul #, pnorm

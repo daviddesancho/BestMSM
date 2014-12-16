@@ -442,3 +442,11 @@ def partial_flux(states,peq,K,pfold,d_peq,d_K,d_pfold,target):
             if j in target and K[j][i]>0: #  dividing line corresponds to I to F transitions                        
                 sum_d_flux += d_J[j][i]
     return sum_d_flux
+
+def propagate_worker(x):
+    """ propagate dynamics using rate matrix exponential"""
+    rate, t, pini = x
+    expkt = scipyla.expm2(rate*t)
+    popul = mat_mul_v(expkt, pini)
+    return popul 
+
