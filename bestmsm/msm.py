@@ -107,7 +107,7 @@ class MasterMSM(object):
 
         """
         # defining lag times to produce the MSM
-        lagtimes = self.dt*np.array(range(1,50,5))
+        lagtimes = self.dt*np.array([1] + range(5,50,5))
 
         # create MSMs at multiple lag times
         self.msms = {}
