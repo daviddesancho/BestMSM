@@ -288,7 +288,9 @@ def do_boots_worker(x):
         count += np.matrix(c)
         ncount_boots += np.sum(c)
     D = nx.DiGraph(count)
-    keep_states = sorted(nx.strongly_connected_components(D)[0])
+    #keep_states = sorted(nx.strongly_connected_components(D)[0])
+    keep_states = sorted(list(nx.strongly_connected_components(D)), 
+                key = len, reverse=True)[0]
     keep_keys = map(lambda x: keys[x], keep_states)
     nkeep = len(keep_keys)
     trans = np.zeros([nkeep, nkeep], float)
@@ -442,3 +444,11 @@ def partial_flux(states,peq,K,pfold,d_peq,d_K,d_pfold,target):
             if j in target and K[j][i]>0: #  dividing line corresponds to I to F transitions                        
                 sum_d_flux += d_J[j][i]
     return sum_d_flux
+
+def propagate_worker(x):
+    """ propagate dynamics using rate matrix exponential"""
+    rate, t, pini = x
+    expkt = scipyla.expm2(rate*t)
+    popul = mat_mul_v(expkt, pini)
+    return popul 
+

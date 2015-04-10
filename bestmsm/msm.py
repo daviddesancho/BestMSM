@@ -267,7 +267,9 @@ class MSM(object):
         """
         print "\n    ...checking connectivity:"
         D = nx.DiGraph(self.count)
-        keep_states = sorted(nx.strongly_connected_components(D)[0])
+        keep_states = sorted(list(nx.strongly_connected_components(D)), 
+                key = len, reverse=True)[0]
+        #keep_states = sorted(nx.strongly_connected_components(D)[0])
         keep_keys = map(lambda x: self.keys[x], keep_states)
         print "          %g states in largest subgraph"%len(keep_keys)
         return keep_states, keep_keys
