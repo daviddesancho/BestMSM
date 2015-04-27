@@ -4,3 +4,7 @@ python:
 
 travis: 
     - develop
+
+install:
+    - python setup.py install 
+
