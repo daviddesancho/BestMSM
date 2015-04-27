@@ -144,13 +144,15 @@ def propagate_eig(elist, rvecs, lvecs, t, pini):
 def bootsfiles(traj_list_dt):
     n = len(traj_list_dt)
     traj_list_dt_new = []
-    for i in range(n):
+    i = 0
+    while i < n:
         k = int(np.random.random()*n)
         traj_list_dt_new.append(traj_list_dt[k])
+        i += 1
     return traj_list_dt_new 
 
-def boots_pick(file, blocksize):
-    raw = open(file).readlines()
+def boots_pick(filename, blocksize):
+    raw = open(filename).readlines()
     lraw = len(raw)
     nblocks = int(lraw/blocksize)
     lblock = int(lraw/nblocks)
@@ -173,9 +175,9 @@ def run_commit(states, K, peq, FF, UU):
     """ calculate committors and reactive flux """
     nstates = len(states)
     # define end-states
-    UUFF = UU+FF
+    UUFF = UU + FF
     print "   definitely FF and UU states", UUFF
-    I = filter(lambda x: x not in UU+FF,states)
+    I = filter(lambda x: x not in UU+FF, states)
     NI = len(I)
 
     # calculate committors
@@ -183,17 +185,17 @@ def run_commit(states, K, peq, FF, UU):
     A = np.zeros([NI,NI], float)
     for j_ind in range(NI):
         j = I[j_ind]
-        sum = 0.
+        summ = 0.
         for i in FF:
-            sum+= K[i][j]
-        b[j_ind] = -sum
+            summ += K[i][j]
+        b[j_ind] = -summ
         for i_ind in range(NI):
             i = I[i_ind]
             A[j_ind][i_ind] = K[i][j]       
     # solve Ax=b
     Ainv = np.linalg.inv(A)
     x = np.dot(Ainv,b)
-    XX = np.dot(Ainv,A)
+    #XX = np.dot(Ainv,A)
 
     pfold = np.zeros(nstates,float)
     for i in range(nstates):
@@ -236,7 +238,6 @@ def calc_count_worker(x):
     lagt = x[3]
     sliding = x[4]
     nstates = len(states)
-    pstate = "NULL"
     lag = int(lagt/dt) # number of frames for lag time
     if sliding:
         slider = 1 # every state is initial state
@@ -271,9 +272,9 @@ def do_boots_worker(x):
     filetmp, keys, lagt, ncount, slider = x
 
     nkeys = len(keys)
-    file = open(filetmp, 'rb')
-    trans = cPickle.load(file)
-    file.close()
+    finp = open(filetmp, 'rb')
+    trans = cPickle.load(finp)
+    finp.close()
     ltrans = len(trans)
     # For multiple processes to be independent we seed with pid
     #print 'process id:', os.getpid()
@@ -308,9 +309,9 @@ def do_boots_worker(x):
     
     tauT = []
     for i in range(1,nkeep):
-        iT, lamT = elistT[i]
+        _, lamT = elistT[i]
         tauT.append(-lagt/np.log(lamT))
-    ieqT, eT = elistT[0]
+    ieqT, _ = elistT[0]
     peqT_sum = reduce(lambda x,y: x + y, map(lambda x: rvecsT[x,ieqT],
              range(nkeep)))
     peqT = rvecsT[:,ieqT]/peqT_sum
@@ -402,12 +403,12 @@ def partial_pfold(states, K, d_K, FF, UU, elem):
     dA = np.zeros([NI,NI], float)
     for j_ind in range(NI):
         j = I[j_ind]
-        sum = 0.
+        summ = 0.
         sumd = 0.
         for i in FF:
-            sum += K[i][j]
+            summ += K[i][j]
             sumd+= d_K[i][j]
-        b[j_ind] = -sum
+        b[j_ind] = -summ
         db[j_ind] = -sumd
         for i_ind in range(NI):
             i = I[i_ind]
