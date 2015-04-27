@@ -2,7 +2,7 @@ import unittest
 import bestmsm.trajectory as traj
 
 
-class Ala5TimeSeriesTest(unittest.TestCase):
+class Ala5TimeSeriesTest():
     def setUp(self):
         traj_ala5 = traj.TimeSeries("ala5_32states_timeseries.dat")
 
@@ -17,3 +17,5 @@ class Ala5TimeSeriesTest(unittest.TestCase):
         assert self.dt > 0
 
 if __name__ == "__main__":
+    unittest.main()
+
