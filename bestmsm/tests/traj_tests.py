@@ -2,7 +2,7 @@ import unittest
 import bestmsm.trajectory as traj
 
 
-class Ala5TimeSeriesTest():
+class Ala5TimeSeriesTest(unittest.TestCase):
     def setUp(self):
         traj_ala5 = traj.TimeSeries("ala5_32states_timeseries.dat")
         state_keys = open("states", "r").readlines()
