@@ -21,6 +21,7 @@ class Ala5TimeSeriesTest():
     def test_keys(self):
         for i in state_keys:
             assert i in self.keys
+
 if __name__ == "__main__":
     unittest.main()
 
