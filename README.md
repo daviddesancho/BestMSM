@@ -1,5 +1,10 @@
+![alt tag](https://travis-ci.org/daviddesancho/BestMSM.svg?branch=develop)
+
+
+
 BestMSM
 =======
+
 bestmsm: is the Best way to make an MSM, or more specifically, the way
 that we do it in Robert Best's group.
 
