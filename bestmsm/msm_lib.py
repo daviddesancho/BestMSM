@@ -2,10 +2,10 @@
 
 import numpy as np
 import networkx as nx
-import os,sys,math,copy #,numarray,linalg
+import os, math, copy #,numarray,linalg
 import itertools,operator
 from scipy import linalg as scipyla
-import multiprocessing as mp
+#import multiprocessing as mp
 import cPickle
 
 # thermal energy (kJ/mol)
@@ -20,8 +20,8 @@ def difference(k1, k2):
     return diff
 
 def esort(ei, ej):
-    i,eval_i = ei
-    j,eval_j = ej
+    _, eval_i = ei
+    _, eval_j = ej
 
     if eval_j.real > eval_i.real:
         return 1
@@ -38,13 +38,13 @@ def find_keys(state_keys, trans, manually_remove):
     nstate = len(state_keys)
     for i in range(nstate):
         key = state_keys[i]
-        sum = 0
+        summ = 0
         sumx = 0
         for j in range(nstate):
             if j!=i:
-                sum+= trans[j][i]   # sources
+                summ += trans[j][i]   # sources
                 sumx += trans[i][j] # sinks
-        if sum > 0 and sumx > 0 and trans[i][i] > 0 and key not in manually_remove:
+        if summ > 0 and sumx > 0 and trans[i][i] > 0 and key not in manually_remove:
             keep_states.append(i)
             keep_keys.append(state_keys[i])
     return keep_states,keep_keys
@@ -64,10 +64,10 @@ def connect_groups(keep_states, trans):
                 l = leftover[i]
                 if l in new_net:
                     continue
-                sum = 0
+                summ = 0
                 for g in new_net:
-                    sum += trans[l][g]+trans[g][l]
-                if sum>0:
+                    summ += trans[l][g]+trans[g][l]
+                if summ > 0:
                     new_net.append(l)
             n_old_new_net = n_new_net
             n_new_net = len(new_net)
@@ -90,12 +90,12 @@ def mat_mul_v(m, v):
     rows = len(m)
     w = [0]*rows
     irange = range(len(v))
-    sum = 0
+    summ = 0
     for j in range(rows):
         r = m[j]
         for i in irange:
-            sum += r[i]*v[i]
-        w[j],sum = sum,0
+            summ += r[i]*v[i]
+        w[j], summ = summ,0
     return w
 
 def dotproduct(v1, v2, sum=sum, imap=itertools.imap, mul=operator.mul):
