@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Discretize - BestMSM</title>
+  <title>README - BestMSM</title>
   
 
   <link rel="shortcut icon" href="../img/favicon.ico">
@@ -48,8 +48,15 @@
 
     
         
-            <li class="toctree-l1 ">
-                <a class="" href="../README/">README</a>
+            <li class="toctree-l1 current">
+                <a class="current" href="./">README</a>
+                
+                    <ul>
+                    
+                        <li class="toctree-l3"><a href="#bestmsm">BestMSM</a></li>
+                        
+                    
+                    </ul>
                 
             </li>
         
@@ -64,15 +71,8 @@
 
     
         
-            <li class="toctree-l1 current">
-                <a class="current" href="./">Discretize</a>
-                
-                    <ul>
-                    
-                        <li class="toctree-l3"><a href="#discretization">Discretization</a></li>
-                        
-                    
-                    </ul>
+            <li class="toctree-l1 ">
+                <a class="" href="../discretize/">Discretize</a>
                 
             </li>
         
@@ -123,7 +123,7 @@
   <ul class="wy-breadcrumbs">
     <li><a href="..">Docs</a> &raquo;</li>
     
-    <li>Discretize</li>
+    <li>README</li>
       <li class="wy-breadcrumbs-aside">
         
       </li>
@@ -132,45 +132,27 @@
 </div>
           <div role="main">
             <div class="section">
-              <h2 id="discretization">Discretization</h2>
-<p>Usually, after running and MD simulation, the first step for constructing an
-MSM is to discretize the data into a number of micro-states. In the past we
-have used two types of discretization, either based on the Ramachandran angles
-or the contact map of the protein. Further details can be found in the following
-references:</p>
-<ul>
-<li>
-<p><a href="http://pubs.acs.org/doi/abs/10.1021/ja200834s">What is the time scale for alpha-helix
- nucleation?</a> J. Am. Chem. Soc. 133 (17), 
-6809-6816 (2011).</p>
-</li>
-<li>
-<p><a href="http://dx.doi.org/10.1021/jp405904g">Engineering Folding Dynamics from Two-State to Downhill: Application to 
-lambda-Repressor</a> J. Phys. Chem. B 117 
-(43) 13435-13443 (2013).</p>
-</li>
-</ul>
-<p>An important detail is that we take advantage of the Transition Based Assignment 
-method, proposed by Buchete and Hummer in their enlightening paper on Master 
-equation models</p>
-<ul>
-<li><a href="http://dx.doi.org/10.1021/jp0761665">Coarse Master Equations for Peptide Folding Dynamics</a> 
-J. Phys. Chem. B 112 (19) 6057–6069 (2008).</li>
-</ul>
-<p>For this preliminary part of the analysis we use a combination of Gromacs programs like
-<a href="https://usersupport.nci.org.au/software/GROMACS/html/online/g_rama.html">g_rama</a> 
-and in-house scripts. Although including this step in the package is in my to-do list,
-it is currently not part of BestMSM.</p>
+              <p><img alt="alt tag" src="https://travis-ci.org/daviddesancho/BestMSM.svg?branch=develop" />
+<img alt="alt tag" src="https://landscape.io/github/daviddesancho/BestMSM/develop/landscape.svg?style=flat" /></p>
+<h1 id="bestmsm">BestMSM</h1>
+<p>bestmsm: is the Best way to make an MSM, or more specifically, the way
+that we do it in Robert Best's group.</p>
+<p>Contributors
+This code has been written by David De Sancho.</p>
+<p>Installation
+  git clone http://github.com/daviddesancho/bestmsm destination/bestmsm
+  cd destination/bestmsm
+  python setup.py install --user</p>
             </div>
           </div>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../msm/" class="btn btn-neutral float-right" title="Msm"/>Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../about/" class="btn btn-neutral float-right" title="About"/>Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../about/" class="btn btn-neutral" title="About"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href=".." class="btn btn-neutral" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -196,14 +178,14 @@ it is currently not part of BestMSM.</p>
 <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
         
-      <span><a href="../about/" style="color: #fcfcfc;">&laquo; Previous</a></span>
-      <span style="margin-left: 15px"><a href="../msm/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href=".." style="color: #fcfcfc;">&laquo; Previous</a></span>
+      <span style="margin-left: 15px"><a href="../about/" style="color: #fcfcfc">Next &raquo;</a></span>
     </span>
 </div>
 
 <!--
 MkDocs version  : 0.12.2
-Docs Build Date : 2015-04-28 22:00:52.516901
+Docs Build Date : 2015-04-28 22:00:52.505047
 -->
 </body>
 </html>
