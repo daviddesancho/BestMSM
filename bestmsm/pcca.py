@@ -30,7 +30,6 @@ class PCCA(MSM):
     """
 
     def __init__(self, parent, N=2, method="robust", optim=False):
-        keys = range(N)
         self.parent = parent
         self.N = N
         self.macros = self.eigen_group(N=self.N, method=method)
@@ -55,7 +54,6 @@ class PCCA(MSM):
 
         # generate eigenvectors in case the MSM does not have them
         if not hasattr(self.parent, 'lvecsT'):
-           lagt = self.parent.lagt
            tauT, peqT, self.parent.rvecsT, self.parent.lvecsT = \
                    self.parent.calc_eigsT(evecs=True)
         lvecs = self.parent.lvecsT
@@ -90,7 +88,6 @@ class PCCA(MSM):
 
         """
         print "\n Mapping trajectory onto macrostates..."
-        lagt = self.parent.lagt
         mappedtraj = []
         keep_states = self.parent.keep_states
         keep_keys = self.parent.keep_keys
@@ -111,7 +108,8 @@ class PCCA(MSM):
                         pass
             mappedtraj.append(mt)
         self.mappedtraj = mappedtraj
-        super(PCCA, self).__init__(self.mappedtraj, keys=keys, lagt=lagt)
+        keys = range(N)
+        super(PCCA, self).__init__(self.mappedtraj, keys=keys, lagt=self.parent.lagt)
 
     def metastability(self):
         """ Calculate metastability according to the definition
