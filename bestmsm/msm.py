@@ -185,25 +185,46 @@ class MSM(object):
         Names of states after removing not strongly connected sets.
 
     """
-    def __init__(self, data, keys=None, lagt=None, evecs=False, sliding=True):
+    def __init__(self, data, keys=None, lagt=None):
         # merge state keys from all trajectories
         self.keys = keys
         self.data = data
         self.lagt = lagt
+
+    def do_count(self, sliding=True):
         print sliding
         self.count = self.calc_count_multi(sliding=sliding)
         self.keep_states, self.keep_keys = self.check_connect()
-        self.trans = self.do_trans()
-        self.rate = self.do_rate()
-        print self.trans
-        print
-        print self.rate
+
+    def do_trans(self, evecs=False):
+        """ 
+        Wrapper for transition matrix calculation.
+        
+        """
+        print "\n Calculating transition matrix ..."
+        nkeep = len(self.keep_states)
+        keep_states = self.keep_states
+        count = self.count
+        self.trans = msm_lib.calc_trans(nkeep, keep_states, count)
         if not evecs:
             self.tauT, self.peqT = self.calc_eigsT()
-            self.tauK, self.peqK = self.calc_eigsK()
         else:
             self.tauT, self.peqT, self.rvecsT, self.lvecsT = \
                     self.calc_eigsT(evecs=True)
+
+    def do_rate(self, evecs=False):
+        """ Wrapper for rate calculation using the msm_lib.calc_rate 
+        function.
+
+
+        """
+        print "\n Calculating rate matrix ..."
+        nkeep = len(self.keep_states)
+        self.rate = msm_lib.calc_rate(nkeep, self.trans, self.lagt)
+        print self.rate
+        if not evecs:
+            self.tauK, self.peqK = self.calc_eigsK()
+        else:
             self.tauK, self.peqK, self.rvecsK, self.lvecsK = \
                     self.calc_eigsK(evecs=True)
 
@@ -266,6 +287,7 @@ class MSM(object):
         
         """
         print "\n    ...checking connectivity:"
+        print self.count
         D = nx.DiGraph(self.count)
         keep_states = sorted(list(nx.strongly_connected_components(D)), 
                 key = len, reverse=True)[0]
@@ -273,35 +295,6 @@ class MSM(object):
         keep_keys = map(lambda x: self.keys[x], keep_states)
         print "          %g states in largest subgraph"%len(keep_keys)
         return keep_states, keep_keys
-
-    def do_trans(self):
-        """ Wrapper for transition matrix calculation.
-
-        Returns:
-        -------
-        array
-            The transition probability matrix.    
-        
-        """
-        print "\n Calculating transition matrix ..."
-        nkeep = len(self.keep_states)
-        keep_states = self.keep_states
-        count = self.count
-        return msm_lib.calc_trans(nkeep, keep_states, count)
-    
-    def do_rate(self):
-        """ Wrapper for rate calculation using the msm_lib.calc_rate 
-        function.
-
-        Returns
-        -------
-        array
-            The rate matrix as calculated by msm_lib.calc_rate
-
-        """
-        print "\n Calculating rate matrix ..."
-        nkeep = len(self.keep_states)
-        return msm_lib.calc_rate(nkeep, self.trans, self.lagt)
 
     def calc_eigsK(self, evecs=False):
         """ Calculate eigenvalues and eigenvectors of rate matrix K
