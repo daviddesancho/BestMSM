@@ -42,7 +42,7 @@ class TestDihedral(unittest.TestCase):
 
         """
         # read trajectory
-        self.traj2states = traj.TimeSeries(filename="tests/alaTB_traj_int.dat")
+        self.traj2states = traj.TimeSeries(filename="tests/alaTB_traj_toy.dat")
         data = [self.traj2states]
         # generate MSM
         self.msm2 = msm.MSM(data, keys=self.traj2states.keys, lagt=10)
@@ -53,20 +53,19 @@ class TestDihedral(unittest.TestCase):
         # do Perron clusters
         msm2pcca = pcca.PCCA(self.msm2, N=2)
         # find clusters based on putative cluster centers
-        mac1 = [x for x in msm2pcca.macros.keys() if self.msm2.keep_keys.index('25') in msm2pcca.macros[x]][0]
-        mac2 = [x for x in msm2pcca.macros.keys() if self.msm2.keep_keys.index('75') in msm2pcca.macros[x]][0]
+        mac1 = [x for x in msm2pcca.macros.keys() if self.msm2.keep_keys.index('1') in msm2pcca.macros[x]][0]
+        mac2 = [x for x in msm2pcca.macros.keys() if self.msm2.keep_keys.index('4') in msm2pcca.macros[x]][0]
         # check that everything is in the right place
-        for i in range(10,40):
+        for i in range(1,2):
             assert self.msm2.keep_keys.index(str(i)) in msm2pcca.macros[mac1] 
-        for i in range(60,90):
+        for i in range(4,5):
             assert self.msm2.keep_keys.index(str(i)) in msm2pcca.macros[mac2]
         # map trajectory onto clusters
         msm2pcca.map_trajectory()
         msm2pcca.do_count()
         # map transition count matrix onto clusters
-        recount = pcca_lib.map_micro2macro(self.msm2.count, msm2pcca.macros)
-        print recount
-        assert msm2pcca == 0
+        recount = pcca_lib.map_micro2macro(self.msm2.count, msm2pcca.macros, self.msm2.keep_states)
+        assert (msm2pcca.count == recount).all()
 
 if __name__ == "__main__":
     unittest.main()

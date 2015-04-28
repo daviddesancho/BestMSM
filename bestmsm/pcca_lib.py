@@ -4,34 +4,24 @@ from scipy import linalg as scipyla
 
 """useful functions for clustering"""
 
-#def calc_trans(mat):
-#    # calculates transition matrix given count matrix
-#    n = len(mat)
-#    trans = np.zeros((n,n),float)
-#    for i in range(n):
-#        ni = reduce(lambda x,y:x+y, map(lambda x: mat[x,i], range(n)))
-#        for j in range(n):
-#            trans[j,i] = float(mat[j,i])/float(ni)
-#    return trans
-#
-#def calc_rate(mat,t):
-#    # calculate rate matrix
-#    n = len(mat)
-#    T = calc_trans(mat)
-#    K = T/t
-#    for i in range(n):
-#        K[i][i] = -(np.sum(K[:i,i]) + np.sum(K[i+1:,i]))
-#    return K,T
-#
-def map_micro2macro(cmic, mac):
+def map_micro2macro(cmic, mac, states):
     # maps microstates into macrostates and returns count matrix
+    print cmic
+    print mac
+    print states
     n = len(cmic)
     m = len(mac)
     cmac = np.zeros((m, m), int)
     for i in range(m):
         for j in range(m):
-            cmac[j,i] = reduce(lambda x, y: x + y, map(lambda (x,y):\
-                cmic[x,y],list(itertools.product(mac[j],mac[i]))))
+            if i == j:
+                print list(itertools.product(mac[j],mac[i]))
+                print [cmic[states[x],states[y]] for (x,y) in itertools.product(mac[j],mac[i])]
+                cmac[j,i] = reduce(lambda x, y: x + y, \
+                    [cmic[states[x],states[y]] for (x,y) in itertools.product(mac[j],mac[i])])
+            else:
+                cmac[j,i] = reduce(lambda x, y: x + y, \
+                    [cmic[states[x],states[y]] for (x,y) in itertools.product(mac[j],mac[i])])
     return cmac
 
 #def update_count(cmic,cmac,mac,im,jm):
