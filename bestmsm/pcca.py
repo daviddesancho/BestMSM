@@ -128,7 +128,7 @@ class PCCA(MSM):
         out.write("#    iter       q \n")
 
         nmac = self.N
-        nmic = len(self.parent.keys)
+        nmic = len(self.parent.keep_keys)
         mcsteps = len(self.count)*1000*nmic # mc steps per block
         mcsteps_max = nmic*20000 # maximum number of mc steps 
         q =  self.metastability()
@@ -161,33 +161,33 @@ class PCCA(MSM):
                     macro_new[imac].remove(imic)
                     macro_new[jmac].append(imic)
                     # calculate transition count matrix for new mapping
-                    count_mac_new = pcca_lib.map_micro2macro(self.parent.count, macro_new)
-                    Kmacro_new,Tmacro_new = msm_lib.calc_rate(nmac, count_mac_new, self.lagt)
-#                    # calculate metastability
-#                    q_new = metastability(Tmacro_new)
-#                    #print "Q new: %g"%q_new
-#                    #print "temp: %g ="%temp
-#                    #print " imc= %g; beta = %g"%(imc,beta)
-#                    delta = beta(imc,mcsteps)*(q - q_new) # calculate increment (Q is a -Energy)
-#                    #print delta
-#                    if metropolis(delta):
-#                        #print "ACCEPT"
-#                        macro = copy.deepcopy(macro_new)
-#                        count_mac = count_mac_new
-#                        q = q_new
-#                        if q > q_opt:
-#                            q_opt = q
-#                            macro_opt = copy.deepcopy(macro)
-#                    else:
-#                        reject+=1
-#                        #print " REJECT"
-#
-#                    if imc%100==0:
-#                        out.write ("%6i %12.10e %12.10e\n"%(imc + nmc*mcsteps,q,1./beta(imc,mcsteps)))
-#                nmc +=1
-#            cont = False    
-#        print " final :",q_opt
-#        print macro_opt
-#        print " acceptance:",1.-float(reject)/mcsteps
-#        return macro_opt
-#            return pcca_lib.do_mc(self.macros, count=self.parent.count, lagt=self.parent.lagt)
+                    count_mac_new = pcca_lib.map_micro2macro(self.parent.count, macro_new, self.parent.keep_states)
+                    Tmacro_new = msm_lib.calc_trans(nmac, range(nmac), count_mac_new)
+                    # calculate metastability
+                    q_new = pcca_lib.metastability(Tmacro_new)
+                    delta = pcca_lib.beta(imc,mcsteps)*(q - q_new) # calculate increment (Q is a -Energy)
+                    if pcca_lib.metropolis(delta):
+                        #print "ACCEPT"
+                        macro = copy.deepcopy(macro_new)
+                        count_mac = count_mac_new
+                        q = q_new
+                        if q > q_opt:
+                            q_opt = q
+                            macro_opt = copy.deepcopy(macro)
+                            Tmacro_opt = Tmacro_new
+                    else:
+                        reject+=1
+                        #print " REJECT"
+
+                    out.write ("%6i %12.10e %12.10e\n"%(imc + nmc*mcsteps,q,1./pcca_lib.beta(imc,mcsteps)))
+                    imc +=1
+                cont = False    
+        print " final :", q
+        print macro
+        print " best :", q_opt
+        q_opt
+        print macro_opt
+        print Tmacro_opt
+        print " acceptance:",1.-float(reject)/mcsteps
+        self.macro = macro_opt
+        self.map_trajectory()
