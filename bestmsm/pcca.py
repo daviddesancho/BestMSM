@@ -1,17 +1,10 @@
-import sys
 import copy
 import random
-import numpy as np
 from msm import MSM
 import trajectory as traj
 import msm_lib
 import pcca_lib
 
-""" 
-================
- PCCA 
-================
-"""
 
 class PCCA(MSM):
     """
@@ -29,11 +22,10 @@ class PCCA(MSM):
 
     """
 
-    def __init__(self, parent, N=2, method="robust", optim=False):
+    def __init__(self, parent, N=2, method="robust"):
         self.parent = parent
         self.N = N
         self.macros = self.eigen_group(N=self.N, method=method)
-
 
     def eigen_group(self, N=2, method="robust"):
         """ Splits microstates into macrostates 
@@ -54,7 +46,7 @@ class PCCA(MSM):
 
         # generate eigenvectors in case the MSM does not have them
         if not hasattr(self.parent, 'lvecsT'):
-           tauT, peqT, self.parent.rvecsT, self.parent.lvecsT = \
+            tauT, peqT, self.parent.rvecsT, self.parent.lvecsT = \
                    self.parent.calc_eigsT(evecs=True)
         lvecs = self.parent.lvecsT
 
