@@ -1,5 +1,5 @@
 ![alt tag](https://travis-ci.org/daviddesancho/BestMSM.svg?branch=develop)
-![alt tag](https://landscape.io/github/daviddesancho/BestMSM/master/landscape.svg?style=flat)
+![alt tag](https://landscape.io/github/daviddesancho/BestMSM/develop/landscape.svg?style=flat)
 
 BestMSM
 =======
