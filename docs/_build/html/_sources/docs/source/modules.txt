@@ -1,7 +1,0 @@
-bestmsm
-=======
-
-.. toctree::
-   :maxdepth: 4
-
-   bestmsm
