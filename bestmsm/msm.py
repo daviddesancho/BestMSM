@@ -87,7 +87,9 @@ class MasterMSM(object):
             The lag time.
 
         """
-        self.msms[lagt] = MSM(self.data, keys=self.keys, lagt=lagt, sliding=sliding)
+        self.msms[lagt] = MSM(self.data, keys=self.keys, lagt=lagt)
+        self.msms.msm[lagt].do_count(sliding=sliding)
+        self.msms.msm[lagt].do_trans()
 
     def chapman_kolmogorov(self, plot=True, N=1, sliding=True, error=True):
         """ Carry out Chapman-Kolmogorov test.
@@ -192,7 +194,6 @@ class MSM(object):
         self.lagt = lagt
 
     def do_count(self, sliding=True):
-        print sliding
         self.count = self.calc_count_multi(sliding=sliding)
         self.keep_states, self.keep_keys = self.check_connect()
 
