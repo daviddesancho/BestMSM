@@ -100,8 +100,7 @@ class PCCA(MSM):
                         pass
             mappedtraj.append(mt)
         self.mappedtraj = mappedtraj
-        keys = range(N)
-        super(PCCA, self).__init__(self.mappedtraj, keys=keys, lagt=self.parent.lagt)
+        super(PCCA, self).__init__(self.mappedtraj, keys=range(self.N), lagt=self.parent.lagt)
 
     def metastability(self):
         """ Calculate metastability according to the definition
