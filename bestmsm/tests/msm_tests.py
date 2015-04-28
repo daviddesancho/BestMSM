@@ -31,6 +31,9 @@ class TestSinglePathway(unittest.TestCase):
         self.msmS.do_trans()
         for pi in self.msmS.peqT:
             assert pi > 0.
+        for t in self.msmS.tauT:
+            print t
+            assert t > 0.
 #CP 
 #6;000 2 2 0 0 0
 #2 1;000 0 2 2 0

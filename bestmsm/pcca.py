@@ -32,11 +32,9 @@ class PCCA(MSM):
     def __init__(self, parent, N=2, method="robust", optim=False):
         keys = range(N)
         self.parent = parent
-        self.macros = self.eigen_group(N=N, method=method)
         self.N = N
-        self.mappedtraj = self.map_trajectory()
-        lagt = parent.lagt
-        super(PCCA, self).__init__(self.mappedtraj, keys=keys, lagt=lagt)
+        self.macros = self.eigen_group(N=self.N, method=method)
+
 
     def eigen_group(self, N=2, method="robust"):
         """ Splits microstates into macrostates 
@@ -59,7 +57,7 @@ class PCCA(MSM):
         if not hasattr(self.parent, 'lvecsT'):
            lagt = self.parent.lagt
            tauT, peqT, self.parent.rvecsT, self.parent.lvecsT = \
-                   self.parent.calc_eigs(lagt=lagt, evecs=True)
+                   self.parent.calc_eigsT(evecs=True)
         lvecs = self.parent.lvecsT
 
         # split in desired number of macrostates
@@ -92,6 +90,7 @@ class PCCA(MSM):
 
         """
         print "\n Mapping trajectory onto macrostates..."
+        lagt = self.parent.lagt
         mappedtraj = []
         keep_states = self.parent.keep_states
         keep_keys = self.parent.keep_keys
@@ -111,7 +110,8 @@ class PCCA(MSM):
                     except IndexError:
                         pass
             mappedtraj.append(mt)
-        return mappedtraj 
+        self.mappedtraj = mappedtraj
+        super(PCCA, self).__init__(self.mappedtraj, keys=keys, lagt=lagt)
 
     def metastability(self):
         """ Calculate metastability according to the definition
