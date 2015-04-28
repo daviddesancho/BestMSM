@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>About - BestMSM</title>
+  <title>Discretize - BestMSM</title>
   
 
   <link rel="shortcut icon" href="../img/favicon.ico">
@@ -56,23 +56,23 @@
 
     
         
-            <li class="toctree-l1 current">
-                <a class="current" href="./">About</a>
-                
-                    <ul>
-                    
-                        <li class="toctree-l3"><a href="#about">About</a></li>
-                        
-                    
-                    </ul>
+            <li class="toctree-l1 ">
+                <a class="" href="../about/">About</a>
                 
             </li>
         
 
     
         
-            <li class="toctree-l1 ">
-                <a class="" href="../discretize/">Discretize</a>
+            <li class="toctree-l1 current">
+                <a class="current" href="./">Discretize</a>
+                
+                    <ul>
+                    
+                        <li class="toctree-l3"><a href="#discretization">Discretization</a></li>
+                        
+                    
+                    </ul>
                 
             </li>
         
@@ -123,7 +123,7 @@
   <ul class="wy-breadcrumbs">
     <li><a href="..">Docs</a> &raquo;</li>
     
-    <li>About</li>
+    <li>Discretize</li>
       <li class="wy-breadcrumbs-aside">
         
       </li>
@@ -132,23 +132,12 @@
 </div>
           <div role="main">
             <div class="section">
-              <h1 id="about">About</h1>
-<p>My name is <a href="https://sites.google.com/site/daviddesanchores/home">David De Sancho</a>
-and currently I am an Ikerbasque Research Fellow at 
-<a href="http://www.nanogune.eu">nanoGUNE</a>. Over the last few years of work as a postdoc
-in the laboratory of <a href="http://spin.niddk.nih.gov/best/home.html">Robert B. Best</a> 
-I have extensively used master equation / Markov state models (generally termed
-MSMs) to analyze data from molecular dynamics simulations. My work is heavily 
-indebted to massive contributions from other groups. So before you get any further
-I would suggest reading the following volume</p>
-<ul>
-<li><a href="http://dx.doi.org/10.1007/978-94-007-7606-7">An Introduction to Markov State Models and Their Application to Long Timescale
-Molecular Simulation</a>, edited 
-by Pande, Bowman and Noe. </li>
-</ul>
-<p>It surely contains all you need to know about this methodology. </p>
-<p>However, there is a gradually increasing number of papers where we have used our
- own flavour of MSMs, and we have even made some small methodological contributions.</p>
+              <h2 id="discretization">Discretization</h2>
+<p>Usually, after running and MD simulation, the first step for constructing an
+MSM is to discretize the data into a number of micro-states. In the past we
+have used two types of discretization, either based on the Ramachandran angles
+or the contact map of the protein. Further details can be found in the following
+references:</p>
 <ul>
 <li>
 <p><a href="http://pubs.acs.org/doi/abs/10.1021/ja200834s">What is the time scale for alpha-helix
@@ -156,40 +145,32 @@ by Pande, Bowman and Noe. </li>
 6809-6816 (2011).</p>
 </li>
 <li>
-<p><a href="http://dx.doi.org/10.1021/ct301033r">Folding kinetics and unfolded state dynamics of the GB1 hairpin from molecular 
-simulation</a>. J. Chem. Theory Comput. 9 (3) 1743-1753 (2013)</p>
-</li>
-<li>
 <p><a href="http://dx.doi.org/10.1021/jp405904g">Engineering Folding Dynamics from Two-State to Downhill: Application to 
 lambda-Repressor</a> J. Phys. Chem. B 117 
 (43) 13435-13443 (2013).</p>
 </li>
-<li>
-<p><a href="http://dx.doi.org/10.1038/ncomms5307">Molecular origins of internal friction effects on protein-folding 
-rates</a> Nat. Commun. 5 (2014).</p>
-</li>
-<li>
-<p><a href="http://dx.doi.org/10.1021/ja511609u">Dependence of Internal Friction on Folding
- Mechanism</a>
- J. Am. Chem. Soc. 137 (9) 3283-3290 (2015)</p>
-</li>
-<li>
-<p><a href="http://dx.doi.org/10.0.3.253/ct5011455">Identification of Mutational Hot Spots for Substrate Diffusion: Application to
- Myoglobin</a> J. Chem. Theory Comput. 1549-9618 (2015).</p>
-</li>
 </ul>
-<p>At some point it became evident that it would be a good idea to make my own code 
-open, version controlled and well documented.</p>
+<p>An important detail is that we take advantage of the Transition Based Assignment 
+method, proposed by Buchete and Hummer in their enlightening paper on Master 
+equation models</p>
+<ul>
+<li><a href="http://dx.doi.org/10.1021/jp0761665">Coarse Master Equations for Peptide Folding Dynamics</a> 
+J. Phys. Chem. B 112 (19) 6057–6069 (2008).</li>
+</ul>
+<p>For this preliminary part of the analysis we use a combination of Gromacs programs like
+<a href="https://usersupport.nci.org.au/software/GROMACS/html/online/g_rama.html">g_rama</a> 
+and in-house scripts. Although including this step in the package is in my to-do list,
+it is currently not part of BestMSM.</p>
             </div>
           </div>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../discretize/" class="btn btn-neutral float-right" title="Discretize"/>Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../msm/" class="btn btn-neutral float-right" title="Msm"/>Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../README/" class="btn btn-neutral" title="README"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../about/" class="btn btn-neutral" title="About"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -215,14 +196,14 @@ open, version controlled and well documented.</p>
 <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
         
-      <span><a href="../README/" style="color: #fcfcfc;">&laquo; Previous</a></span>
-      <span style="margin-left: 15px"><a href="../discretize/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../about/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      <span style="margin-left: 15px"><a href="../msm/" style="color: #fcfcfc">Next &raquo;</a></span>
     </span>
 </div>
 
 <!--
 MkDocs version  : 0.12.2
-Docs Build Date : 2015-04-28 21:53:15.722775
+Docs Build Date : 2015-04-28 21:53:15.728861
 -->
 </body>
 </html>
