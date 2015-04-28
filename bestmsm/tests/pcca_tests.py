@@ -47,7 +47,7 @@ class TestDihedral(unittest.TestCase):
         # generate MSM
         self.msm2 = msm.MSM(data, keys=self.traj2states.keys, lagt=10)
         self.msm2.do_count()
-        self.msm2.do_trans()
+        self.msm2.do_trans(evecs=True)
 
     def test_mapping(self):
         # do Perron clusters
@@ -63,6 +63,8 @@ class TestDihedral(unittest.TestCase):
         # map trajectory onto clusters
         msm2pcca.map_trajectory()
         msm2pcca.do_count()
+        msm2pcca.do_trans()
+        assert msm2pcca.metastability() < 2
         # map transition count matrix onto clusters
         recount = pcca_lib.map_micro2macro(self.msm2.count, msm2pcca.macros, self.msm2.keep_states)
         assert (msm2pcca.count == recount).all()

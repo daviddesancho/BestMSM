@@ -81,7 +81,6 @@ class PCCA(MSM):
         """
         print "\n Mapping trajectory onto macrostates..."
         mappedtraj = []
-        print self.macros
         keep_states = self.parent.keep_states
         keep_keys = self.parent.keep_keys
         for data in self.parent.data:

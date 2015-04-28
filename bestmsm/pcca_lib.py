@@ -6,17 +6,12 @@ from scipy import linalg as scipyla
 
 def map_micro2macro(cmic, mac, states):
     # maps microstates into macrostates and returns count matrix
-    print cmic
-    print mac
-    print states
     n = len(cmic)
     m = len(mac)
     cmac = np.zeros((m, m), int)
     for i in range(m):
         for j in range(m):
             if i == j:
-                print list(itertools.product(mac[j],mac[i]))
-                print [cmic[states[x],states[y]] for (x,y) in itertools.product(mac[j],mac[i])]
                 cmac[j,i] = reduce(lambda x, y: x + y, \
                     [cmic[states[x],states[y]] for (x,y) in itertools.product(mac[j],mac[i])])
             else:

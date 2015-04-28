@@ -186,6 +186,7 @@ class MSM(object):
         self.keys = keys
         self.data = data
         self.lagt = lagt
+        print keys
 
     def do_count(self, sliding=True):
         self.count = self.calc_count_multi(sliding=sliding)
@@ -210,7 +211,6 @@ class MSM(object):
     def do_rate(self, evecs=False):
         """ Wrapper for rate calculation using the msm_lib.calc_rate 
         function.
-
 
         """
         print "\n Calculating rate matrix ..."
@@ -286,6 +286,7 @@ class MSM(object):
         D = nx.DiGraph(self.count)
         keep_states = sorted(list(nx.strongly_connected_components(D)), 
                 key = len, reverse=True)[0]
+        keep_states.sort()
         #keep_states = sorted(nx.strongly_connected_components(D)[0])
         keep_keys = map(lambda x: self.keys[x], keep_states)
         print "          %g states in largest subgraph"%len(keep_keys)
