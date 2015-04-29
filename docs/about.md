@@ -46,4 +46,4 @@ rates](http://dx.doi.org/10.1038/ncomms5307) Nat. Commun. 5 (2014).
 
 
 At some point it became evident that it would be a good idea to make my own code 
-open, version controlled and well documented.
+open, version controlled, tested and well documented.
