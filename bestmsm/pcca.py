@@ -88,6 +88,7 @@ class PCCA(MSM):
             mt.dt = data.dt
             mt.time = data.time
             mt.states = []
+            mt.filename = data.filename
             for s in data.states:
                 try:
                     mt.states.append([k for k, v in self.macros.iteritems() \
@@ -147,7 +148,7 @@ class PCCA(MSM):
         reject = 0
         while cont:
             imc = 0 
-            out.write ("%6i %12.10f\n"%(imc + nmc*mcsteps,q))
+            out.write ("%6i %12.10f %10.6e\n"%(imc + nmc*mcsteps,q,1))
             while imc < mcsteps:
                 # try ramdom insertion of a microstate in a macrostate
                 imac = 0
@@ -182,18 +183,32 @@ class PCCA(MSM):
                             macro_opt = copy.deepcopy(macro)
                             Tmacro_opt = Tmacro_new
                             self.macro = copy.deepcopy(macro_opt)
-                            self.map_trajectory()
-                            msm2pcca.do_count()
-                            msm2pcca.do_trans()
                     else:
                         reject+=1
                         #print " REJECT"
 
-                    out.write ("%6i %12.10e %12.10e\n"%(imc + nmc*mcsteps,q,1./pcca_lib.beta(imc,mcsteps)))
+                    out.write ("%6i %12.10e %10.6e\n"%(imc + nmc*mcsteps,q,1./pcca_lib.beta(imc,mcsteps)))
                     imc +=1
                 cont = False    
         print " final :", q
         print " best :", q_opt
         print " acceptance:",1.-float(reject)/mcsteps
-        print self.count
-        print self.trans
+
+        self.map_trajectory()
+        self.do_count()
+        self.do_trans()
+
+    def write_mapping(self):
+        """ 
+        Prints files with the mapping between states and clusters
+
+        """
+        for data in msmpcca.mappedtraj:
+            try:
+                idf = msmpcca.parent.data.filename.rfind(".dat")
+                filename = data.filename[:idf] + "_mapped.dat"
+            except ValueError:
+                filename = data.filename + "_mapped.dat"
+            fout = open(filename, "w")
+            micro_data = [x for x in msmpcca.parent.data if x.filename == msmpcca.data[0].filename][0]
+

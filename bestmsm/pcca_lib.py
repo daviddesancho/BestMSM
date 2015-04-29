@@ -90,7 +90,7 @@ def metastability(T):
 def beta(imc,mcsteps):
     # inverse temperature for MCSA
     x = imc - 1
-    a = 10./mcsteps
+    a = 4./mcsteps
     temp = (1 + (math.exp(-a*x)-1.)/(1.-math.exp(-a*mcsteps))) # MCSA temperature
     try:
         beta = 1./temp
