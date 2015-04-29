@@ -6,7 +6,10 @@ of molecular kinetics.
 
 ## Index 
 
-* [Discretization](discretize.md)
-* [Parsing trajectories](trajectory.md)
-* [Generating your Markov model](msm.md)
-* [Clustering the MSM](pcca.md)
+1. Installation
+2. Building an MSM with BestMSM
+	* [Discretization](discretize.md)
+	* [Parsing trajectories](trajectory.md)
+	* [Generating your Markov model](msm.md)
+	* [Clustering the MSM](pcca.md)
+3. Example

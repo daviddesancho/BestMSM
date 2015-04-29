@@ -5,7 +5,7 @@ site_author: David De Sancho
 pages :
         - ['about.md', 'About']
         - ['index.md', 'Introduction']
-        - ['discretize.md', 'Discretizing the data']
-        - ['trajectory.md', 'Parsing trajectories']
-        - ['msm.md', 'Constructing the MSM']
-        - ['pcca.md', 'Clustering the MSM']
+        - ['discretize.md', 'User guide', 'Discretizing the data']
+        - ['trajectory.md', 'User guide', 'Parsing trajectories']
+        - ['msm.md', 'User guide', 'Constructing the MSM']
+        - ['pcca.md', 'User guide', 'Clustering the MSM']
