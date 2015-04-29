@@ -49,35 +49,30 @@
 
     
         
-        <span>User guide</span>
-            
-                <li class="toctree-l1 ">
-                    <a class="" href="../discretize">Discretizing the data</a>
-                    
-                </li>
-            
-                <li class="toctree-l1 ">
-                    <a class="" href="../trajectory">Parsing trajectories</a>
-                    
-                </li>
-            
-                <li class="toctree-l1 ">
-                    <a class="" href="../msm">Constructing the MSM</a>
-                    
-                </li>
-            
-                <li class="toctree-l1 current">
-                    <a class="current" href=".">Clustering the MSM</a>
-                    
-                        <ul>
-                        
-                            <li class="toctree-l2"><a href="#clustering-the-msm">Clustering the MSM</a></li>
-                            
-                        
-                        </ul>
-                    
-                </li>
-            
+            <li class="toctree-l1 ">
+                <a class="" href="../discretize">Discretizing the data</a>
+            </li>
+        
+
+    
+        
+            <li class="toctree-l1 ">
+                <a class="" href="../trajectory">Parsing trajectories</a>
+            </li>
+        
+
+    
+        
+            <li class="toctree-l1 ">
+                <a class="" href="../msm">Constructing the MSM</a>
+            </li>
+        
+
+    
+        
+            <li class="toctree-l1 current">
+                <a class="current" href=".">Clustering the MSM</a>
+            </li>
         
 
     
@@ -115,21 +110,6 @@
           <div role="main">
             <div class="section">
               <h1 id="clustering-the-msm">Clustering the MSM</h1>
-<p>For now in BestMSM there is only one approach for clustering the microscopic 
-MSM into a macrostate model. Here we borrow the methods described by Buchete 
-and Hummer to build macrostates based on the sign or distribution of the 
-eigenvector values.</p>
-<ul>
-<li><a href="http://dx.doi.org/10.1021/jp0761665">Coarse Master Equations for Peptide Folding Dynamics</a>
-J. Phys. Chem. B 112 (19) 6057–6069 (2008).</li>
-</ul>
-<p>As they stated in their paper, this approach is a version of Perron clustering
-(i.e. PCCA). On top of the methods described in the reference above, and 
-following work by <a href="http://dx.doi.org/10.1063/1.2714538">Chodera et al</a> we 
-include an optimization step in the clustering. This way, there is some chance 
-that imperfections in the initial, eigenvector-based clustering, will be overcome. 
-The optimization is a Monte Carlo simulated annealing procedure where the
- metastability plays the role of the energy and we use a simple temperature scheme.</p>
 
             </div>
           </div>

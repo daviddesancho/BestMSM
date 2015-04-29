@@ -49,35 +49,30 @@
 
     
         
-        <span>User guide</span>
-            
-                <li class="toctree-l1 ">
-                    <a class="" href="../discretize">Discretizing the data</a>
-                    
-                </li>
-            
-                <li class="toctree-l1 current">
-                    <a class="current" href=".">Parsing trajectories</a>
-                    
-                        <ul>
-                        
-                            <li class="toctree-l2"><a href="#parsing-trajectories">Parsing trajectories</a></li>
-                            
-                        
-                        </ul>
-                    
-                </li>
-            
-                <li class="toctree-l1 ">
-                    <a class="" href="../msm">Constructing the MSM</a>
-                    
-                </li>
-            
-                <li class="toctree-l1 ">
-                    <a class="" href="../pcca">Clustering the MSM</a>
-                    
-                </li>
-            
+            <li class="toctree-l1 ">
+                <a class="" href="../discretize">Discretizing the data</a>
+            </li>
+        
+
+    
+        
+            <li class="toctree-l1 current">
+                <a class="current" href=".">Parsing trajectories</a>
+            </li>
+        
+
+    
+        
+            <li class="toctree-l1 ">
+                <a class="" href="../msm">Constructing the MSM</a>
+            </li>
+        
+
+    
+        
+            <li class="toctree-l1 ">
+                <a class="" href="../pcca">Clustering the MSM</a>
+            </li>
         
 
     
@@ -115,6 +110,17 @@
           <div role="main">
             <div class="section">
               <h1 id="parsing-trajectories">Parsing trajectories</h1>
+<p>The first step when using BestMSM consists in reading discretized trajectory 
+files. This is done by constructing instances of the <code>TimeSeries</code> class. The file
+format for the time series is very simple. One needs something like</p>
+<pre><code>0.0 00000
+0.2 00001
+0.4 00001
+...
+</code></pre>
+
+<p>where the first column is the time stamp for the snapshots in the simulation
+and the second column is the list of states.</p>
 
             </div>
           </div>
