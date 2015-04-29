@@ -109,11 +109,15 @@ class PCCA(MSM):
         """
         return pcca_lib.metastability(self.trans)
 
-    def optim(self, fout="mc.dat"):
+    def optim(self, nsteps=1, nwrite=None, fout="mc.dat"):
         """ MC optimization using the metastability Q as energy.
         
         Parameters
         ----------
+        nsteps : int
+            Number of steps per round of MC and per microstate.
+        nwrite : int
+            Frequency of writing MC output.
         fout : string
             File for output of MC progress.
 
@@ -129,8 +133,10 @@ class PCCA(MSM):
 
         nmac = self.N
         nmic = len(self.parent.keep_keys)
-        mcsteps = len(self.count)*1000*nmic # mc steps per block
+        mcsteps = len(self.count)*nsteps*nmic # mc steps per block
         mcsteps_max = nmic*20000 # maximum number of mc steps 
+        print self.count
+        print self.trans
         q =  self.metastability()
         print " initial:", q
         q_opt = q
@@ -175,6 +181,10 @@ class PCCA(MSM):
                             q_opt = q
                             macro_opt = copy.deepcopy(macro)
                             Tmacro_opt = Tmacro_new
+                            self.macro = copy.deepcopy(macro_opt)
+                            self.map_trajectory()
+                            msm2pcca.do_count()
+                            msm2pcca.do_trans()
                     else:
                         reject+=1
                         #print " REJECT"
@@ -183,11 +193,7 @@ class PCCA(MSM):
                     imc +=1
                 cont = False    
         print " final :", q
-        print macro
         print " best :", q_opt
-        q_opt
-        print macro_opt
-        print Tmacro_opt
         print " acceptance:",1.-float(reject)/mcsteps
-        self.macro = macro_opt
-        self.map_trajectory()
+        print self.count
+        print self.trans
