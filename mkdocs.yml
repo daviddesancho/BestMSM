@@ -1,0 +1,11 @@
+site_name : BestMSM
+theme : readthedocs
+repo_url : https://github.com/daviddesancho/BestMSM
+site_author: David De Sancho
+pages :
+        - ['about.md', 'About']
+        - ['index.md', 'Introduction']
+        - ['discretize.md', 'Discretizing the data']
+        - ['trajectory.md', 'Parsing trajectories']
+        - ['msm.md', 'Constructing the MSM']
+        - ['pcca.md', 'Clustering the MSM']
