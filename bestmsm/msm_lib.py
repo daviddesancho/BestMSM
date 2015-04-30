@@ -226,7 +226,7 @@ def run_commit(states, K, peq, FF, UU):
     pU = np.sum(peq[filter(lambda x: x not in FF, range(len(states)))])
 #    pU = np.sum(peq[filter(lambda x: x in UU, range(len(states)))])
     kf = sum_flux/pU
-    print "   binding rate: %g"%kf
+#    print "   binding rate: %g"%kf
     return J, pfold, sum_flux, kf
 
 def calc_count_worker(x):

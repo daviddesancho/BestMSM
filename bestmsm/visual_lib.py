@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -70,8 +71,9 @@ def write_dot(D, nodeweight=None, edgeweight=None, out="out.dot"):
 #    #       out.write ("{rank=same; %i; %i;}\n"%(u,v))
 #
 
-    for (u,v) in D.edges(): 
-       fout.write("%i -> %i  [penwidth=%f,color=black];\n"%(u, v, weight[u,v]))
+    for (u,v) in D.edges():
+        if u != v and not math.isnan(weight[u,v]):
+            fout.write("%i -> %i  [penwidth=%f,color=black];\n"%(u, v, weight[u,v]))
 
     fout.write("}")
 
