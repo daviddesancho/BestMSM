@@ -203,12 +203,15 @@ class PCCA(MSM):
         Prints files with the mapping between states and clusters
 
         """
-        for data in msmpcca.mappedtraj:
+        for mtraj in self.mappedtraj:
             try:
-                idf = msmpcca.parent.data.filename.rfind(".dat")
-                filename = data.filename[:idf] + "_mapped.dat"
+                idf = mtraj.filename.rfind(".dat")
+                filename = mtraj.filename[:idf] + "_mapped_pcca%g.dat"%self.N
             except ValueError:
-                filename = data.filename + "_mapped.dat"
+                filename = mtraj.filename + "_mapped_pcca%g.dat"%self.N
+            print " ...writing mapped trajectory at %s"%filename
             fout = open(filename, "w")
-            micro_data = [x for x in msmpcca.parent.data if x.filename == msmpcca.data[0].filename][0]
-
+            micro_data = [x for x in self.parent.data if x.filename == mtraj.filename][0]
+            for x in zip(micro_data.time, micro_data.states, self.data[0].states):
+                fout.write("%10.3f %s %8i\n"%(x[0], x[1], x[2]))
+            fout.close()

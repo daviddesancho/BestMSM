@@ -18,3 +18,12 @@ where the first column is the time stamp for the snapshots in the simulation
 and the second column is the list of states. The time stamps can be omitted, 
 in which case integer units of time will be used. The states can be anything
 that fits in a string, as they will be read as strings by BestMSM. 
+
+For each trajectory we will generate an instance of the TimeSeries class in the
+following way:
+
+```
+from bestmsm import trajectory as traj
+
+
+```
