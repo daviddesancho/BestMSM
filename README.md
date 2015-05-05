@@ -3,9 +3,8 @@
 
 BestMSM
 =======
-
-bestmsm: is the Best way to make an MSM, or more specifically, the way
-that we do it in Robert Best's group.
+BestMSM is a Python package for building master equation / Markov state models.
+You can read the documentation [here](http://daviddesancho.github.io/BestMSM/).
 
 Contributors
 ------------
