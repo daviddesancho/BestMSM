@@ -82,8 +82,8 @@ class MasterMSM(object):
 
         """
         self.msms[lagt] = MSM(self.data, keys=self.keys, lagt=lagt)
-        self.msms.msm[lagt].do_count(sliding=sliding)
-        self.msms.msm[lagt].do_trans()
+        self.msms[lagt].do_count(sliding=sliding)
+        self.msms[lagt].do_trans()
 
     def chapman_kolmogorov(self, plot=True, N=1, sliding=True, error=True):
         """ Carry out Chapman-Kolmogorov test.
