@@ -109,7 +109,9 @@ class MasterMSM(object):
         self.msms = {}
         for lagt in lagtimes:
             print "\n Generating MSM at lag time: %g"%lagt
-            self.msms[lagt] = MSM(self.data, self.keys, lagt, sliding=sliding)
+            self.msms[lagt] = MSM(self.data, self.keys, lagt)
+            self.msms[lagt].do_count(sliding=sliding)
+            self.msms[lagt].do_trans()
             print "\n    Count matrix:\n", self.msms[lagt].count
             print "\n    Transition matrix:\n", self.msms[lagt].trans
             if error:               

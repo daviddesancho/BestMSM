@@ -10,10 +10,12 @@ msm_ala5 = msm.MasterMSM([traj_ala5, traj_ala5])
 
 msm_ala5.do_msm(lagt=1)
 msm_ala5.msms[1]
-#msm_ala5.msms[1].boots()
+msm_ala5.msms[1].do_count()
+msm_ala5.msms[1].do_trans()
+msm_ala5.msms[1].boots()
 
-time,popul = msm_ala5.msms[1].propagateK(init=['11111'])
-time,popul = msm_ala5.msms[1].propagateK(p0="pini.dat")
+#time,popul = msm_ala5.msms[1].propagateK(init=['11111'])
+#time,popul = msm_ala5.msms[1].propagateK(p0="pini.dat")
 
 #msmpcca = pcca.PCCA(msm_ala5.msms[1], N=4)
 
