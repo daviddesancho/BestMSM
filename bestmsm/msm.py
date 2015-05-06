@@ -112,8 +112,8 @@ class MasterMSM(object):
             self.msms[lagt] = MSM(self.data, self.keys, lagt)
             self.msms[lagt].do_count(sliding=sliding)
             self.msms[lagt].do_trans()
-            print "\n    Count matrix:\n", self.msms[lagt].count
-            print "\n    Transition matrix:\n", self.msms[lagt].trans
+            #print "\n    Count matrix:\n", self.msms[lagt].count
+            #print "\n    Transition matrix:\n", self.msms[lagt].trans
             if error:               
                 tau_ave, tau_std, peq_ave, peq_std = self.msms[lagt].boots(nboots=48)
                 self.msms[lagt].tau_std = tau_std
@@ -217,7 +217,7 @@ class MSM(object):
         print "\n Calculating rate matrix ..."
         nkeep = len(self.keep_states)
         self.rate = msm_lib.calc_rate(nkeep, self.trans, self.lagt)
-        print self.rate
+        #print self.rate
         if not evecs:
             self.tauK, self.peqK = self.calc_eigsK()
         else:
@@ -283,7 +283,7 @@ class MSM(object):
         
         """
         print "\n    ...checking connectivity:"
-        print self.count
+        #print self.count
         D = nx.DiGraph(self.count)
         keep_states = sorted(list(nx.strongly_connected_components(D)), 
                 key = len, reverse=True)[0]
