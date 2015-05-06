@@ -18,7 +18,6 @@ class MasterMSM(object):
     ----------
     trajectories : list of str
         Set of trajectories used for the construction.
-
     filekeys : str
         A file from which the states are read. If not defined, then
         keys are automatically generated from the time series.
@@ -28,13 +27,10 @@ class MasterMSM(object):
     ----------
     keys : list of str
         Names of states.
-
     count : np array
         Transition count matrix.
-
     keep_states : list of str
         Names of states after removing not strongly connected sets.
-
     msms : dict
         A dictionary containing MSMs for different lag times.
         
@@ -85,14 +81,13 @@ class MasterMSM(object):
         self.msms[lagt].do_count(sliding=sliding)
         self.msms[lagt].do_trans()
 
-    def chapman_kolmogorov(self, plot=True, N=1, sliding=True, error=True):
-        """ Carry out Chapman-Kolmogorov test.
+    def convergence_test(self, plot=True, N=1, sliding=True, error=True):
+        """ Carry out convergence test for relaxation times.
 
         Parameters:
         -----------
         plot : bool
             Whether the lag time dependence of the relaxation times should be plotted.
-
         N: int
             The number of modes for which we are building the MSM.
 
@@ -134,6 +129,54 @@ class MasterMSM(object):
             ax.set_ylabel(r'$\tau$', fontsize=16)
             plt.show()
 
+    def chapman_kolmogorov(self, plot=True, init=None, sliding=True, error=True):
+        """ Carry out Chapman-Kolmogorov test.
+
+        Parameters:
+        -----------
+        plot : bool
+            Whether the result should be plotted.
+        init : str
+            The states from which the relaxation should be simulated.
+        sliding : bool
+
+        Returns: 
+        -------
+        msm : dict
+            A dictionary with the multiple instances of the MSM class.
+
+        """
+        # defining lag times to produce the MSM
+        lagtimes = self.dt*np.array([1] + range(5,50,5))
+
+        # create MSMs at multiple lag times
+        self.msms = {}
+        for lagt in lagtimes:
+            print "\n Generating MSM at lag time: %g"%lagt
+            self.msms[lagt] = MSM(self.data, self.keys, lagt)
+            self.msms[lagt].do_count(sliding=sliding)
+            self.msms[lagt].do_trans()
+            #print "\n    Count matrix:\n", self.msms[lagt].count
+            #print "\n    Transition matrix:\n", self.msms[lagt].trans
+            if error:               
+                tau_ave, tau_std, peq_ave, peq_std = self.msms[lagt].boots(nboots=48)
+                self.msms[lagt].tau_std = tau_std
+                self.msms[lagt].tau_ave = tau_ave
+                self.msms[lagt].peq_std = peq_std
+                self.msms[lagt].peq_ave = peq_std
+
+        if plot:
+            fig, ax = plt.subplots(facecolor='white')
+            for n in range(N):
+                data = [self.msms[x].tauT[n] for x in lagtimes]
+                if not error:
+                    ax.plot(lagtimes, data, 'o-', label=n)
+                else:
+                    ebar = [self.msms[x].tau_std[n] for x in lagtimes]
+                    ax.errorbar(lagtimes, data, yerr=ebar, fmt='o', label=n)
+            ax.set_xlabel(r'Time', fontsize=16)
+            ax.set_ylabel(r'$\tau$', fontsize=16)
+            plt.show()
 #    def do_pcca(self, lagt=10, N=2, optim=True):
 #        """ Do PCCA clustering
 #
@@ -160,13 +203,10 @@ class MSM(object):
     ----------
     data : list of str
         Set of trajectories used for the construction.
-
     keys : list of str
         Set of states in the model.
-
     lag : float
         Lag time for building the MSM.
-
     sliding : bool
         Whether the method of sliding windows or independent counts 
         are used.
@@ -175,10 +215,8 @@ class MSM(object):
     ----------
     keys : list of str
         Names of states.
-
     count : np array
         Transition count matrix.
-
     keep_states : list of str
         Names of states after removing not strongly connected sets.
 
@@ -407,10 +445,8 @@ class MSM(object):
         -----------
         nboots : int
             Number of bootstrap samples
-
         nproc : int
             Number of processors to use
-
         plot : bool
             Whether we want to plot the distribution of tau / peq
         
@@ -418,7 +454,6 @@ class MSM(object):
         --------
         tau_err : array
             Errors for the relaxation times
-
         peq_err : array
             Errors for the equilibrium probabilities
 
