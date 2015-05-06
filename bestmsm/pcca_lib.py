@@ -19,29 +19,6 @@ def map_micro2macro(cmic, mac, states):
                     [cmic[states[x],states[y]] for (x,y) in itertools.product(mac[j],mac[i])])
     return cmac
 
-#def update_count(cmic,cmac,mac,im,jm):
-#    # update macro-state count matrix
-#    n = len(cmic)
-#    m = len(mac)
-#    cmac_new = cmac
-#    for i in range(m):
-#        for j in [im,jm]:
-#            # update number of transitions FROM macrostates involved
-#            cmac_new[j,i] = reduce(lambda x,y: x+y,map(lambda(x,y):\
-#                cmic[x,y],list(itertools.product(mac[j],mac[i]))))
-#            # update number of transitions TO macrostates involved
-#            cmac_new[i,j] = reduce(lambda x,y: x+y,map(lambda(x,y):\
-#                cmic[x,y],list(itertools.product(mac[i],mac[j]))))
-#
-#    return cmac_new
-#
-#def sort_vecs(v,lw,rw):
-#    indx_eig= np.argsort(-np.real(v))
-#    v_sort = v[indx_eig]
-#    lw_sort = lw[:,indx_eig]
-#    rw_sort = rw[:,indx_eig]
-#    return v_sort,lw_sort,rw_sort
-
 def test_sign(v):
     """check whether positive and negative signs are present in vector"""
     test = False
@@ -113,7 +90,7 @@ def metastability(T):
 def beta(imc,mcsteps):
     # inverse temperature for MCSA
     x = imc - 1
-    a = 10./mcsteps
+    a = 4./mcsteps
     temp = (1 + (math.exp(-a*x)-1.)/(1.-math.exp(-a*mcsteps))) # MCSA temperature
     try:
         beta = 1./temp

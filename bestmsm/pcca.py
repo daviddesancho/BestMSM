@@ -88,6 +88,7 @@ class PCCA(MSM):
             mt.dt = data.dt
             mt.time = data.time
             mt.states = []
+            mt.filename = data.filename
             for s in data.states:
                 try:
                     mt.states.append([k for k, v in self.macros.iteritems() \
@@ -109,11 +110,15 @@ class PCCA(MSM):
         """
         return pcca_lib.metastability(self.trans)
 
-    def optim(self, fout="mc.dat"):
+    def optim(self, nsteps=1, nwrite=None, fout="mc.dat"):
         """ MC optimization using the metastability Q as energy.
         
         Parameters
         ----------
+        nsteps : int
+            Number of steps per round of MC and per microstate.
+        nwrite : int
+            Frequency of writing MC output.
         fout : string
             File for output of MC progress.
 
@@ -128,9 +133,11 @@ class PCCA(MSM):
         out.write("#    iter       q \n")
 
         nmac = self.N
-        nmic = len(self.parent.keys)
-        mcsteps = len(self.count)*1000*nmic # mc steps per block
+        nmic = len(self.parent.keep_keys)
+        mcsteps = len(self.count)*nsteps*nmic # mc steps per block
         mcsteps_max = nmic*20000 # maximum number of mc steps 
+        print self.count
+        print self.trans
         q =  self.metastability()
         print " initial:", q
         q_opt = q
@@ -141,7 +148,7 @@ class PCCA(MSM):
         reject = 0
         while cont:
             imc = 0 
-            out.write ("%6i %12.10f\n"%(imc + nmc*mcsteps,q))
+            out.write ("%6i %12.10f %10.6e\n"%(imc + nmc*mcsteps,q,1))
             while imc < mcsteps:
                 # try ramdom insertion of a microstate in a macrostate
                 imac = 0
@@ -161,33 +168,50 @@ class PCCA(MSM):
                     macro_new[imac].remove(imic)
                     macro_new[jmac].append(imic)
                     # calculate transition count matrix for new mapping
-                    count_mac_new = pcca_lib.map_micro2macro(self.parent.count, macro_new)
-                    Kmacro_new,Tmacro_new = msm_lib.calc_rate(nmac, count_mac_new, self.lagt)
-#                    # calculate metastability
-#                    q_new = metastability(Tmacro_new)
-#                    #print "Q new: %g"%q_new
-#                    #print "temp: %g ="%temp
-#                    #print " imc= %g; beta = %g"%(imc,beta)
-#                    delta = beta(imc,mcsteps)*(q - q_new) # calculate increment (Q is a -Energy)
-#                    #print delta
-#                    if metropolis(delta):
-#                        #print "ACCEPT"
-#                        macro = copy.deepcopy(macro_new)
-#                        count_mac = count_mac_new
-#                        q = q_new
-#                        if q > q_opt:
-#                            q_opt = q
-#                            macro_opt = copy.deepcopy(macro)
-#                    else:
-#                        reject+=1
-#                        #print " REJECT"
-#
-#                    if imc%100==0:
-#                        out.write ("%6i %12.10e %12.10e\n"%(imc + nmc*mcsteps,q,1./beta(imc,mcsteps)))
-#                nmc +=1
-#            cont = False    
-#        print " final :",q_opt
-#        print macro_opt
-#        print " acceptance:",1.-float(reject)/mcsteps
-#        return macro_opt
-#            return pcca_lib.do_mc(self.macros, count=self.parent.count, lagt=self.parent.lagt)
+                    count_mac_new = pcca_lib.map_micro2macro(self.parent.count, macro_new, self.parent.keep_states)
+                    Tmacro_new = msm_lib.calc_trans(nmac, range(nmac), count_mac_new)
+                    # calculate metastability
+                    q_new = pcca_lib.metastability(Tmacro_new)
+                    delta = pcca_lib.beta(imc,mcsteps)*(q - q_new) # calculate increment (Q is a -Energy)
+                    if pcca_lib.metropolis(delta):
+                        #print "ACCEPT"
+                        macro = copy.deepcopy(macro_new)
+                        count_mac = count_mac_new
+                        q = q_new
+                        if q > q_opt:
+                            q_opt = q
+                            macro_opt = copy.deepcopy(macro)
+                            Tmacro_opt = Tmacro_new
+                            self.macro = copy.deepcopy(macro_opt)
+                    else:
+                        reject+=1
+                        #print " REJECT"
+
+                    out.write ("%6i %12.10e %10.6e\n"%(imc + nmc*mcsteps,q,1./pcca_lib.beta(imc,mcsteps)))
+                    imc +=1
+                cont = False    
+        print " final :", q
+        print " best :", q_opt
+        print " acceptance:",1.-float(reject)/mcsteps
+
+        self.map_trajectory()
+        self.do_count()
+        self.do_trans()
+
+    def write_mapping(self):
+        """ 
+        Prints files with the mapping between states and clusters
+
+        """
+        for mtraj in self.mappedtraj:
+            try:
+                idf = mtraj.filename.rfind(".dat")
+                filename = mtraj.filename[:idf] + "_mapped_pcca%g.dat"%self.N
+            except ValueError:
+                filename = mtraj.filename + "_mapped_pcca%g.dat"%self.N
+            print " ...writing mapped trajectory at %s"%filename
+            fout = open(filename, "w")
+            micro_data = [x for x in self.parent.data if x.filename == mtraj.filename][0]
+            for x in zip(micro_data.time, micro_data.states, self.data[0].states):
+                fout.write("%10.3f %s %8i\n"%(x[0], x[1], x[2]))
+            fout.close()
