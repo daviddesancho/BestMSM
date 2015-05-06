@@ -91,11 +91,6 @@ class MasterMSM(object):
         N: int
             The number of modes for which we are building the MSM.
 
-        Returns: 
-        -------
-        msm : dict
-            A dictionary with the multiple instances of the MSM class.
-
         """
         # defining lag times to produce the MSM
         lagtimes = self.dt*np.array([1] + range(5,50,5))
@@ -139,15 +134,13 @@ class MasterMSM(object):
         init : str
             The states from which the relaxation should be simulated.
         sliding : bool
-
-        Returns: 
-        -------
-        msm : dict
-            A dictionary with the multiple instances of the MSM class.
+            Whether a sliding window is used to count transitions.
 
         """
+        nkeys = len(self.keys)
         # defining lag times to produce the MSM
-        lagtimes = self.dt*np.array([1] + range(5,50,5))
+        lagtimes = self.dt*np.array([1] + range(5,50,10))
+
 
         # create MSMs at multiple lag times
         self.msms = {}
@@ -156,27 +149,35 @@ class MasterMSM(object):
             self.msms[lagt] = MSM(self.data, self.keys, lagt)
             self.msms[lagt].do_count(sliding=sliding)
             self.msms[lagt].do_trans()
-            #print "\n    Count matrix:\n", self.msms[lagt].count
-            #print "\n    Transition matrix:\n", self.msms[lagt].trans
-            if error:               
-                tau_ave, tau_std, peq_ave, peq_std = self.msms[lagt].boots(nboots=48)
-                self.msms[lagt].tau_std = tau_std
-                self.msms[lagt].tau_ave = tau_ave
-                self.msms[lagt].peq_std = peq_std
-                self.msms[lagt].peq_ave = peq_std
+            self.msms[lagt].do_rate()
 
-        if plot:
-            fig, ax = plt.subplots(facecolor='white')
-            for n in range(N):
-                data = [self.msms[x].tauT[n] for x in lagtimes]
-                if not error:
-                    ax.plot(lagtimes, data, 'o-', label=n)
-                else:
-                    ebar = [self.msms[x].tau_std[n] for x in lagtimes]
-                    ax.errorbar(lagtimes, data, yerr=ebar, fmt='o', label=n)
-            ax.set_xlabel(r'Time', fontsize=16)
-            ax.set_ylabel(r'$\tau$', fontsize=16)
-            plt.show()
+        init_states = [x for x in range(nkeys) if self.keys[x] in init]
+        print init_states
+        # propagate rate matrix
+        pMSM = []
+        for lagt in lagtimes:
+             pt = [x[init_states] for x in self.msms[lagt].propagateK(init=init)]
+             print pt
+#           np.sum(self.msms[lagt].propagateK(init=init)))
+
+        # calculate population from simulation data
+#        pMD = []
+ #       for lagt in lagtimes:
+  #          pMD.append(np.sum([self.count[:,i] for i in init]))
+
+#        # plotting    
+#        if plot:
+#            fig, ax = plt.subplots(facecolor='white')
+#            for n in range(N):
+#                data = [self.msms[x].tauT[n] for x in lagtimes]
+#                if not error:
+#                    ax.plot(lagtimes, data, 'o-', label=n)
+#                else:
+#                    ebar = [self.msms[x].tau_std[n] for x in lagtimes]
+#                    ax.errorbar(lagtimes, data, yerr=ebar, fmt='o', label=n)
+#            ax.set_xlabel(r'Time', fontsize=16)
+#            ax.set_ylabel(r'$\tau$', fontsize=16)
+#            plt.show()
 #    def do_pcca(self, lagt=10, N=2, optim=True):
 #        """ Do PCCA clustering
 #
@@ -236,7 +237,7 @@ class MSM(object):
         Wrapper for transition matrix calculation.
         
         """
-        print "\n Calculating transition matrix ..."
+        print "\n    Calculating transition matrix ..."
         nkeep = len(self.keep_states)
         keep_states = self.keep_states
         count = self.count
@@ -252,7 +253,7 @@ class MSM(object):
         function.
 
         """
-        print "\n Calculating rate matrix ..."
+        print "\n    Calculating rate matrix ..."
         nkeep = len(self.keep_states)
         self.rate = msm_lib.calc_rate(nkeep, self.trans, self.lagt)
         #print self.rate
@@ -266,8 +267,8 @@ class MSM(object):
         """ Calculate transition count matrix in parallel 
         
         """
-        print "\n Calculating transition count matrix...\n"
-        print "   sliding window option: ", sliding
+        print "\n    Calculating transition count matrix...\n"
+        print "       sliding window option: ", sliding
 
         # define multiprocessing options
         if not nproc:           
@@ -351,7 +352,7 @@ class MSM(object):
             Left eigenvectors of K, sorted.
 
         """
-        print "\n Calculating eigenvalues and eigenvectors of K"
+        print "\n    Calculating eigenvalues and eigenvectors of K"
         evalsK, lvecsK, rvecsK = \
                    scipyla.eig(self.rate, left=True)
         # sort modes
@@ -720,7 +721,7 @@ class MSM(object):
         p0 : string
             Filename with initial population.
         init : string
-            State name corresponding to 100% initial population.
+            State(s) where the population is initialized.
         
         Returns
         -------
@@ -729,6 +730,7 @@ class MSM(object):
         pnorm : array
             Population of all states as a function of time - normalized.
         """
+        print " Propagating the dynamics of the MSM ..."
          # time for relaxation
         logt = np.arange(np.log10(self.lagt), 7., 0.25)
         time = 10**logt
@@ -737,22 +739,23 @@ class MSM(object):
         nkeep = len(self.keep_states)
         if p0 is not None:
             try:
-                print " reading initial population from file: %s"%p0
+                print "   reading initial population from file: %s"%p0
                 pini = [float(y) for y in \
                         filter(lambda x: x.split()[0] not in ["#","@"],
                         open(p0, "r").readlines())]
             except TypeError:
-                print " p0 is not file"
-                print " exiting here"
+                print "    p0 is not file"
+                print "    exiting here"
                 return
         elif init is not None:
-            print " initializing all population in states"
+            print "    initializing all population in states"
             print init
             pini = [self.peqK[x] if self.keep_keys[x] in init else 0. for x in range(nkeep)]
+
         # check normalization and size
         if len(pini) != nkeep:
-            print " initial population vector and state space have different sizes"
-            print " stopping here" 
+            print "    initial population vector and state space have different sizes"
+            print "    stopping here" 
             return
         else:
             sum_pini = np.sum(pini)
