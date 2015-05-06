@@ -188,7 +188,6 @@ class MSM(object):
         self.keys = keys
         self.data = data
         self.lagt = lagt
-        print keys
 
     def do_count(self, sliding=True):
         self.count = self.calc_count_multi(sliding=sliding)
