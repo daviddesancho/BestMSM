@@ -19,7 +19,7 @@ msm_ala5.msms[1].do_rate()
 #time,popul = msm_ala5.msms[1].propagateK(init=['11111'])
 time, popul = msm_ala5.msms[1].propagateK(init=['00000'])
 
-msm_ala5.chapman_kolmogorov(init=['00000'])
+msm_ala5.chapman_kolmogorov(init=['00000', '00001'])
 #msmpcca = pcca.PCCA(msm_ala5.msms[1], N=4)
 
 #msmpcca.optim()

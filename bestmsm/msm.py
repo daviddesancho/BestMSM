@@ -2,6 +2,7 @@ import os
 import sys
 import tempfile
 import cPickle
+import itertools
 import numpy as np
 import networkx as nx
 import scipy.linalg as scipyla
@@ -141,7 +142,7 @@ class MasterMSM(object):
         # defining lag times to produce the MSM
         lagtimes = self.dt*np.array([1] + range(5,50,10))
 
-
+        init_states = [x for x in range(nkeys) if self.keys[x] in init]
         # create MSMs at multiple lag times
         self.msms = {}
         for lagt in lagtimes:
@@ -151,19 +152,18 @@ class MasterMSM(object):
             self.msms[lagt].do_trans()
             self.msms[lagt].do_rate()
 
-        init_states = [x for x in range(nkeys) if self.keys[x] in init]
-        print init_states
-        # propagate rate matrix
-        pMSM = []
-        for lagt in lagtimes:
-             pt = [x[init_states] for x in self.msms[lagt].propagateK(init=init)]
-             print pt
-#           np.sum(self.msms[lagt].propagateK(init=init)))
+            # propagate rate matrix
+            pMSM = []
+            self.msms[lagt].pt = self.msms[lagt].propagateK(init=init)
 
         # calculate population from simulation data
-#        pMD = []
- #       for lagt in lagtimes:
-  #          pMD.append(np.sum([self.count[:,i] for i in init]))
+        pMD = []
+        for lagt in lagtimes:
+            num = np.sum([self.msms[lagt].count[j,i] for (j,i) in \
+                    itertools.product(init_states,init_states)])
+            den = np.sum([self.msms[lagt].count[:,i] for i in init_states])
+            pMD.append((lagt, num/den))
+        print pMD
 
 #        # plotting    
 #        if plot:
@@ -756,6 +756,7 @@ class MSM(object):
         if len(pini) != nkeep:
             print "    initial population vector and state space have different sizes"
             print "    stopping here" 
+#           np.sum(self.msms[lagt].propagateK(init=init)))
             return
         else:
             sum_pini = np.sum(pini)
