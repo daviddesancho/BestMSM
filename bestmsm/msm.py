@@ -94,7 +94,7 @@ class MasterMSM(object):
 
         """
         # defining lag times to produce the MSM
-        lagtimes = self.dt*np.array([1] + range(5,50,5))
+        lagtimes = self.dt*np.array([1] + range(5,100,5))
 
         # create MSMs at multiple lag times
         self.msms = {}
@@ -125,59 +125,90 @@ class MasterMSM(object):
             ax.set_ylabel(r'$\tau$', fontsize=16)
             plt.show()
 
-    def chapman_kolmogorov(self, plot=True, init=None, sliding=True, error=True):
+    def chapman_kolmogorov(self, init=None, sliding=True, error=True, plot=True):
         """ Carry out Chapman-Kolmogorov test.
 
         Parameters:
         -----------
-        plot : bool
-            Whether the result should be plotted.
         init : str
             The states from which the relaxation should be simulated.
         sliding : bool
             Whether a sliding window is used to count transitions.
+        error : bool
+            Whether errors are calculated.
+        plot : bool
+            Whether the result should be plotted.
 
         """
+        print "\n Chapman - Kolmogorov test:"
         nkeys = len(self.keys)
         # defining lag times to produce the MSM
-        lagtimes = self.dt*np.array([1] + range(5,50,10))
+        lagtimes = self.dt*np.array([1] + range(20,110,20))
 
+        print "\n    Initial states",init
         init_states = [x for x in range(nkeys) if self.keys[x] in init]
+
         # create MSMs at multiple lag times
+        print "\n    Calculating relaxation from MSM" 
         self.msms = {}
+        pMSM = []
         for lagt in lagtimes:
-            print "\n Generating MSM at lag time: %g"%lagt
+            print "\n    ...generating MSM at lag time: %g"%lagt
             self.msms[lagt] = MSM(self.data, self.keys, lagt)
             self.msms[lagt].do_count(sliding=sliding)
             self.msms[lagt].do_trans()
             self.msms[lagt].do_rate()
 
             # propagate rate matrix
-            pMSM = []
-            self.msms[lagt].pt = self.msms[lagt].propagateK(init=init)
+            pt = self.msms[lagt].propagateK(init=init)
+            time = pt[0]
+            ltime = len(time)
+            pop = np.array(pt[1])
+            pMSM.append((time, np.sum(pop[:,x] for x in init_states)))
 
         # calculate population from simulation data
+        print "\n    Calculating populations from MD" 
         pMD = []
-        for lagt in lagtimes:
-            num = np.sum([self.msms[lagt].count[j,i] for (j,i) in \
-                    itertools.product(init_states,init_states)])
-            den = np.sum([self.msms[lagt].count[:,i] for i in init_states])
-            pMD.append((lagt, num/den))
-        print pMD
+        epMD = []
+        logs = np.arange(1,4,0.25) 
+        lagtimes_md = 10**logs*self.dt
+        for lagt in lagtimes_md:
+            try:
+                num = np.sum([self.msms[lagt].count[j,i] for (j,i) in \
+                        itertools.product(init_states,init_states)])
+            except KeyError:
+                self.msms[lagt] = MSM(self.data, self.keys, lagt)
+                self.msms[lagt].do_count(sliding=sliding)
+                num = np.sum([self.msms[lagt].count[j,i] for (j,i) in \
+                        itertools.product(init_states,init_states)])
 
-#        # plotting    
-#        if plot:
-#            fig, ax = plt.subplots(facecolor='white')
-#            for n in range(N):
-#                data = [self.msms[x].tauT[n] for x in lagtimes]
-#                if not error:
-#                    ax.plot(lagtimes, data, 'o-', label=n)
-#                else:
-#                    ebar = [self.msms[x].tau_std[n] for x in lagtimes]
-#                    ax.errorbar(lagtimes, data, yerr=ebar, fmt='o', label=n)
-#            ax.set_xlabel(r'Time', fontsize=16)
-#            ax.set_ylabel(r'$\tau$', fontsize=16)
-#            plt.show()
+            den = np.sum([self.msms[lagt].count[:,i] for i in init_states])
+            pMD.append((lagt, float(num)/den))
+
+            if error:
+                num = pMD[-1][1]-pMD[-1][1]**2
+                den = np.sum([self.msms[lagt].count[j,i] for (i,j) in \
+                        itertools.product(init_states,init_states)])
+                epMD.append(np.sqrt(lagt/self.dt*num/den))
+        pMD = np.array(pMD)
+
+        # plotting
+        if plot:
+            fig, ax = plt.subplots(facecolor='white')
+            # plot MD probabilities first
+            if not error:
+                ax.plot(pMD[:,0],pMD[:,1],'o')
+            else:
+                ax.errorbar(pMD[:,0],pMD[:,1],yerr=epMD, fmt='o')
+            # plot MSM probabilities second
+            n = 0
+            for pM in pMSM:
+                ax.plot(pM[0], pM[1], label=lagtimes[n])
+                n +=1
+            ax.set_xlabel(r'Time', fontsize=16)
+            ax.set_ylabel(r'$\tau$', fontsize=16)
+        plt.show()
+
 #    def do_pcca(self, lagt=10, N=2, optim=True):
 #        """ Do PCCA clustering
 #
@@ -237,7 +268,7 @@ class MSM(object):
         Wrapper for transition matrix calculation.
         
         """
-        print "\n    Calculating transition matrix ..."
+        #print "\n    Calculating transition matrix ..."
         nkeep = len(self.keep_states)
         keep_states = self.keep_states
         count = self.count
@@ -253,7 +284,7 @@ class MSM(object):
         function.
 
         """
-        print "\n    Calculating rate matrix ..."
+        #print "\n    Calculating rate matrix ..."
         nkeep = len(self.keep_states)
         self.rate = msm_lib.calc_rate(nkeep, self.trans, self.lagt)
         #print self.rate
@@ -267,15 +298,15 @@ class MSM(object):
         """ Calculate transition count matrix in parallel 
         
         """
-        print "\n    Calculating transition count matrix...\n"
-        print "       sliding window option: ", sliding
+        #print "\n    Calculating transition count matrix...\n"
+        #print "       sliding window option: ", sliding
 
         # define multiprocessing options
         if not nproc:           
             nproc = mp.cpu_count()
             if len(self.data) < nproc:
                 nproc = len(self.data)
-                print "\n    ...running on %g processors"%nproc
+                #print "\n    ...running on %g processors"%nproc
         pool = mp.Pool(processes=nproc)
         # generate multiprocessing input
         mpinput = map(lambda x: [x.states, x.dt, self.keys, self.lagt, sliding], self.data)
@@ -321,7 +352,7 @@ class MSM(object):
         """ Check connectivity of rate matrix. 
         
         """
-        print "\n    ...checking connectivity:"
+        #print "\n    ...checking connectivity:"
         #print self.count
         D = nx.DiGraph(self.count)
         keep_states = sorted(list(nx.strongly_connected_components(D)), 
@@ -329,7 +360,7 @@ class MSM(object):
         keep_states.sort()
         #keep_states = sorted(nx.strongly_connected_components(D)[0])
         keep_keys = map(lambda x: self.keys[x], keep_states)
-        print "          %g states in largest subgraph"%len(keep_keys)
+        #print "          %g states in largest subgraph"%len(keep_keys)
         return keep_states, keep_keys
 
     def calc_eigsK(self, evecs=False):
@@ -352,7 +383,7 @@ class MSM(object):
             Left eigenvectors of K, sorted.
 
         """
-        print "\n    Calculating eigenvalues and eigenvectors of K"
+        #print "\n       Calculating eigenvalues and eigenvectors of K"
         evalsK, lvecsK, rvecsK = \
                    scipyla.eig(self.rate, left=True)
         # sort modes
@@ -405,7 +436,7 @@ class MSM(object):
             Left eigenvectors of T, sorted.
 
         """
-        print "\n Calculating eigenvalues and eigenvectors of T"
+        #print "\n Calculating eigenvalues and eigenvectors of T"
         evalsT, lvecsT, rvecsT = \
                 scipyla.eig(self.trans, left=True)
         # sort modes
@@ -459,26 +490,26 @@ class MSM(object):
             Errors for the equilibrium probabilities
 
         """
-        print "\n Doing bootstrap tests:"
+        #print "\n Doing bootstrap tests:"
         # how much data is here?
         # generate trajectory list for easy handling 
         trajs = [[x.states, x.dt] for x in self.data]
         ltraj = [len(x[0])*x[1] for x in trajs]
         timetot = np.sum(ltraj) # total simulation time
         ncount = np.sum(self.count)
-        print "     Total time: %g"%timetot
-        print "     Number of trajectories: %g"%len(trajs)
-        print "     Total number of transitions: %g"%ncount
+        #print "     Total time: %g"%timetot
+        #print "     Number of trajectories: %g"%len(trajs)
+        #print "     Total number of transitions: %g"%ncount
 
         # how many resamples?
         if not nboots:
             nboots = 100
-        print "     Number of resamples: %g"%nboots
+        #print "     Number of resamples: %g"%nboots
 
         # how many trajectory fragments?
         ltraj_median = np.median(ltraj)
-        if ltraj_median > timetot/10.:
-            print "     ...splitting trajectories"
+        #if ltraj_median > timetot/10.:
+        #    #print "     ...splitting trajectories"
         while ltraj_median > timetot/10.:
             trajs_new = []
             #cut trajectories in chunks
@@ -496,15 +527,15 @@ class MSM(object):
         cPickle.dump(trajs, file, protocol=cPickle.HIGHEST_PROTOCOL)
         file.close()
 
-        print "     Number of trajectories: %g"%len(trajs)
-        print "     Median of trajectory length: %g"%ltraj_median
+        #print "     Number of trajectories: %g"%len(trajs)
+        #print "     Median of trajectory length: %g"%ltraj_median
 
         # now do it
-        print "     ...doing bootstrap analysis"
+        #print "     ...doing bootstrap analysis"
         # multiprocessing options
         if not nproc:           
             nproc = mp.cpu_count()
-        print "     ...running on %g processors"%nproc
+        #print "     ...running on %g processors"%nproc
         pool = mp.Pool(processes=nproc)
 
         multi_boots_input = map(lambda x: [filetmp, self.keys, self.lagt, ncount, 
@@ -598,7 +629,7 @@ class MSM(object):
             The scaling factor.
 
         """
-        print "\n scaling kiS by %g"%scaling
+        #print "\n scaling kiS by %g"%scaling
         nkeep = len(self.keep_keys)
         jscale = [self.keep_keys.index(x) for x in iscale]
         for j in jscale:
@@ -632,7 +663,7 @@ class MSM(object):
             The foldign rate UU -> FF
 
         """
-        print "\n Calculating commitment probabilities and fluxes..."
+        #print "\n Calculating commitment probabilities and fluxes..."
         _states = range(len(self.keep_states))
         if isinstance(FF, list):
             _FF = [self.keep_keys.index(x) for x in FF]
@@ -713,7 +744,7 @@ class MSM(object):
 
         return dJ, d_peq, d_kon, kon 
 
-    def propagateK(self, p0=None, init=None):
+    def propagateK(self, p0=None, init=None, time=None):
         """ Propagation of rate matrix using matrix exponential 
         
         Parameters
@@ -722,6 +753,8 @@ class MSM(object):
             Filename with initial population.
         init : string
             State(s) where the population is initialized.
+        time : list, array
+            User defined range of temperatures for propagating the dynamics.
         
         Returns
         -------
@@ -730,32 +763,38 @@ class MSM(object):
         pnorm : array
             Population of all states as a function of time - normalized.
         """
-        print " Propagating the dynamics of the MSM ..."
-         # time for relaxation
-        logt = np.arange(np.log10(self.lagt), 7., 0.25)
-        time = 10**logt
+        #print " Propagating the dynamics of the MSM ..."
+
+        # time for relaxation
+        if not time:
+            tmin = self.lagt
+            tmax = 1e4*self.lagt
+            logt = np.arange(np.log10(tmin), np.log10(tmax), 0.2)
+            time = 10**logt
+        else:
+            time = np.array(time)
         ltime = len(time)
 
         nkeep = len(self.keep_states)
         if p0 is not None:
             try:
-                print "   reading initial population from file: %s"%p0
+                #print "   reading initial population from file: %s"%p0
                 pini = [float(y) for y in \
                         filter(lambda x: x.split()[0] not in ["#","@"],
                         open(p0, "r").readlines())]
             except TypeError:
-                print "    p0 is not file"
-                print "    exiting here"
+                #print "    p0 is not file"
+                #print "    exiting here"
                 return
         elif init is not None:
-            print "    initializing all population in states"
-            print init
+            #print "    initializing all population in states"
+            #print init
             pini = [self.peqK[x] if self.keep_keys[x] in init else 0. for x in range(nkeep)]
 
         # check normalization and size
         if len(pini) != nkeep:
-            print "    initial population vector and state space have different sizes"
-            print "    stopping here" 
+            #print "    initial population vector and state space have different sizes"
+            #print "    stopping here" 
 #           np.sum(self.msms[lagt].propagateK(init=init)))
             return
         else:
