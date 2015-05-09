@@ -142,11 +142,13 @@ class MasterMSM(object):
         """
         print "\n Chapman - Kolmogorov test:"
         nkeys = len(self.keys)
+        print nkeys
         # defining lag times to produce the MSM
         lagtimes = self.dt*np.array([1] + range(20,110,20))
 
         print "\n    Initial states",init
         init_states = [x for x in range(nkeys) if self.keys[x] in init]
+        print init_states
 
         # create MSMs at multiple lag times
         print "\n    Calculating relaxation from MSM" 
@@ -164,6 +166,11 @@ class MasterMSM(object):
             time = pt[0]
             ltime = len(time)
             pop = np.array(pt[1])
+            print time
+            print pop
+            print len(pop[:,1])
+            print len(pop[1,:])
+            sys.exit()
             pMSM.append((time, np.sum(pop[:,x] for x in init_states)))
 
         # calculate population from simulation data
@@ -763,7 +770,7 @@ class MSM(object):
         pnorm : array
             Population of all states as a function of time - normalized.
         """
-        #print " Propagating the dynamics of the MSM ..."
+        print " Propagating the dynamics of the MSM ..."
 
         # time for relaxation
         if not time:
@@ -790,7 +797,6 @@ class MSM(object):
             #print "    initializing all population in states"
             #print init
             pini = [self.peqK[x] if self.keep_keys[x] in init else 0. for x in range(nkeep)]
-
         # check normalization and size
         if len(pini) != nkeep:
             #print "    initial population vector and state space have different sizes"
@@ -802,12 +808,16 @@ class MSM(object):
             pini_norm = [np.float(x)/sum_pini for x in pini]
 
         # propagate rate matrix : parallel version
-        nproc = mp.cpu_count()
-        pool = mp.Pool(processes=nproc)
-        pool_input = [(self.rate, t, pini_norm) for t in time]
-        popul = pool.map(msm_lib.propagate_worker, tuple(pool_input))
-        pool.close()
-        pool.join()
+        popul = []
+        for t in time:
+            x = [self.rate, t, pini_norm]
+            popul.append(msm_lib.propagate_worker(x))
+        #nproc = mp.cpu_count()
+        #pool = mp.Pool(processes=nproc)
+        #pool_input = [(self.rate, t, pini_norm) for t in time]
+        #popul = pool.map(msm_lib.propagate_worker, tuple(pool_input))
+        #pool.close()
+        #pool.join()
 
         ## normalize relaxation
         #imax = np.argmax(ptot)
