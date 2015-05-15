@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Parsing trajectories - BestMSM</title>
+  <title>Installation - BestMSM</title>
   
 
   <link rel="shortcut icon" href="../img/favicon.ico">
@@ -56,8 +56,15 @@
 
     
         
-            <li class="toctree-l1 ">
-                <a class="" href="../installation/">Installation</a>
+            <li class="toctree-l1 current">
+                <a class="current" href="./">Installation</a>
+                
+                    <ul>
+                    
+                        <li class="toctree-l3"><a href="#installation">Installation</a></li>
+                        
+                    
+                    </ul>
                 
             </li>
         
@@ -71,15 +78,8 @@
                     
                 </li>
             
-                <li class="toctree-l2 current">
-                    <a class="current" href="./">Parsing trajectories</a>
-                    
-                        <ul>
-                        
-                            <li class="toctree-l3"><a href="#parsing-trajectories-the-trajectory-module">Parsing trajectories: the trajectory module</a></li>
-                            
-                        
-                        </ul>
+                <li class="toctree-l2 ">
+                    <a class="" href="../trajectory/">Parsing trajectories</a>
                     
                 </li>
             
@@ -117,11 +117,7 @@
   <ul class="wy-breadcrumbs">
     <li><a href="../about/">Docs</a> &raquo;</li>
     
-      
-        <li>User guide &raquo;</li>
-      
-    
-    <li>Parsing trajectories</li>
+    <li>Installation</li>
       <li class="wy-breadcrumbs-aside">
         
           
@@ -134,27 +130,13 @@
 </div>
           <div role="main">
             <div class="section">
-              <h1 id="parsing-trajectories-the-trajectory-module">Parsing trajectories: the <code>trajectory</code> module</h1>
-<p>All the aspects related with parsing trajectory files in BestMSM are included
-in the <code>trajectory</code> module. </p>
-<p>The first step when consists in reading discretized trajectory 
-files. This is done by constructing instances of the <code>TimeSeries</code> class. The file
-format for the time series is very simple. One needs something like</p>
-<pre><code>0.0 00000
-0.2 00001
-0.4 00001
-...
-</code></pre>
-
-<p>where the first column is the time stamp for the snapshots in the simulation
-and the second column is the list of states. The time stamps can be omitted, 
-in which case integer units of time will be used. The states can be anything
-that fits in a string, as they will be read as strings by BestMSM. </p>
-<p>For each trajectory we will generate an instance of the TimeSeries class in the
-following way:</p>
-<pre><code>from bestmsm import trajectory as traj
-
-
+              <h2 id="installation">Installation</h2>
+<p>You can install BestMSM by simply downloading the package from the GitHub
+repository and using the standard installation instructions for packages built
+using <a href="https://docs.python.org/2/distutils/index.html">Distutils</a></p>
+<pre><code>git clone http://github.com/daviddesancho/bestmsm destination/bestmsm
+cd destination/bestmsm
+python setup.py install --user
 </code></pre>
             </div>
           </div>
@@ -162,10 +144,10 @@ following way:</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../msm/" class="btn btn-neutral float-right" title="Constructing the MSM"/>Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../discretize/" class="btn btn-neutral float-right" title="Discretizing the data"/>Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../discretize/" class="btn btn-neutral" title="Discretizing the data"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href=".." class="btn btn-neutral" title="Introduction"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -193,14 +175,14 @@ following way:</p>
         
             <a href="https://github.com/daviddesancho/BestMSM" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
         
-      <span><a href="../discretize/" style="color: #fcfcfc;">&laquo; Previous</a></span>
-      <span style="margin-left: 15px"><a href="../msm/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href=".." style="color: #fcfcfc;">&laquo; Previous</a></span>
+      <span style="margin-left: 15px"><a href="../discretize/" style="color: #fcfcfc">Next &raquo;</a></span>
     </span>
 </div>
 
 <!--
 MkDocs version  : 0.12.2
-Docs Build Date : 2015-05-15 21:27:55.964681
+Docs Build Date : 2015-05-15 21:27:55.955800
 -->
 </body>
 </html>
