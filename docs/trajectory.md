@@ -19,11 +19,18 @@ and the second column is the list of states. The time stamps can be omitted,
 in which case integer units of time will be used. The states can be anything
 that fits in a string, as they will be read as strings by BestMSM. 
 
-For each trajectory we will generate an instance of the TimeSeries class in the
+For each trajectory we will generate an instance of the `TimeSeries` class in the
 following way:
 
 ```
 from bestmsm import trajectory as traj
 
-
+mytraj0 = traj.TimeSeries("filename0")
+mytraj1 = traj.TimeSeries("filename1")
+...
 ```
+
+Each instance of the `TimeSeries` class has its own set of attributes: the 
+value for `dt`, the `keys` or names of the states, the `filename` that 
+the data was read from, and the time series itself, formed by two lists
+of time-stamps (`time`) and states (`states`).
