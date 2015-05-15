@@ -4,7 +4,7 @@ My name is [David De Sancho](https://sites.google.com/site/daviddesanchores/home
 and currently I am an Ikerbasque Research Fellow at 
 [nanoGUNE](http://www.nanogune.eu). Over the last few years of work as a postdoc
 in the laboratory of [Robert B. Best](http://spin.niddk.nih.gov/best/home.html) 
-I have extensively used master equation / Markov state models (generally termed
+I have extensively used master equation / Markov state models (usually termed
 MSMs) to analyze data from molecular dynamics simulations. My work is heavily 
 indebted to massive contributions from other groups. So before you get any further
 I would suggest reading the following volume
