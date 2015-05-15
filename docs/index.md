@@ -6,7 +6,7 @@ of molecular kinetics.
 
 ## Index 
 
-1. Installation
+1. [Installation](installation.md)
 2. Building an MSM with BestMSM
 	* [Discretization](discretize.md)
 	* [Parsing trajectories](trajectory.md)
