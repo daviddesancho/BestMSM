@@ -93,24 +93,35 @@ class MasterMSM(object):
             The number of modes for which we are building the MSM.
 
         """
+        print "\n Convergence test for the MSM: looking a implied timescales"
+
         # defining lag times to produce the MSM
-        lagtimes = self.dt*np.array([1] + range(5,100,5))
+        #lagtimes = self.dt*np.array([1] + range(5,100,5))
+        lagtimes = self.dt*np.array([1] + range(50,210,25))
 
         # create MSMs at multiple lag times
         self.msms = {}
         for lagt in lagtimes:
-            print "\n Generating MSM at lag time: %g"%lagt
-            self.msms[lagt] = MSM(self.data, self.keys, lagt)
-            self.msms[lagt].do_count(sliding=sliding)
-            self.msms[lagt].do_trans()
-            #print "\n    Count matrix:\n", self.msms[lagt].count
-            #print "\n    Transition matrix:\n", self.msms[lagt].trans
-            if error:               
-                tau_ave, tau_std, peq_ave, peq_std = self.msms[lagt].boots(nboots=48)
-                self.msms[lagt].tau_std = tau_std
-                self.msms[lagt].tau_ave = tau_ave
-                self.msms[lagt].peq_std = peq_std
-                self.msms[lagt].peq_ave = peq_std
+            if lagt not in self.msms.keys():
+                print "\n    Generating MSM at lag time: %g"%lagt
+                self.msms[lagt] = MSM(self.data, self.keys, lagt)
+                self.msms[lagt].do_count(sliding=sliding)
+                self.msms[lagt].do_trans()
+                #print "\n    Count matrix:\n", self.msms[lagt].count
+                #print "\n    Transition matrix:\n", self.msms[lagt].trans
+                if error:               
+                    tau_ave, tau_std, peq_ave, peq_std = self.msms[lagt].boots(nboots=48)
+                    self.msms[lagt].tau_std = tau_std
+                    self.msms[lagt].tau_ave = tau_ave
+                    self.msms[lagt].peq_std = peq_std
+                    self.msms[lagt].peq_ave = peq_std
+            else: 
+                if not hasattr(self.msms[lagt].tau_ave) and error:
+                    tau_ave, tau_std, peq_ave, peq_std = self.msms[lagt].boots(nboots=48)
+                    self.msms[lagt].tau_std = tau_std
+                    self.msms[lagt].tau_ave = tau_ave
+                    self.msms[lagt].peq_std = peq_std
+                    self.msms[lagt].peq_ave = peq_std
 
         if plot:
             fig, ax = plt.subplots(facecolor='white')
@@ -142,43 +153,44 @@ class MasterMSM(object):
         """
         print "\n Chapman - Kolmogorov test:"
         nkeys = len(self.keys)
-        print nkeys
         # defining lag times to produce the MSM
-        lagtimes = self.dt*np.array([1] + range(20,110,20))
+        lagtimes = self.dt*np.array([1] + range(50,210,25))
+        # defining lag times to propopagate  
+        logs = np.arange(1,4,0.25) 
+        lagtimes_md = 10**logs*self.dt
 
         print "\n    Initial states",init
         init_states = [x for x in range(nkeys) if self.keys[x] in init]
-        print init_states
 
         # create MSMs at multiple lag times
         print "\n    Calculating relaxation from MSM" 
         self.msms = {}
         pMSM = []
         for lagt in lagtimes:
-            print "\n    ...generating MSM at lag time: %g"%lagt
-            self.msms[lagt] = MSM(self.data, self.keys, lagt)
-            self.msms[lagt].do_count(sliding=sliding)
-            self.msms[lagt].do_trans()
-            self.msms[lagt].do_rate()
+            if lagt not in self.msms.keys():
+                self.msms[lagt] = MSM(self.data, self.keys, lagt)
+                self.msms[lagt].do_count(sliding=sliding)
+                self.msms[lagt].do_trans()
+                self.msms[lagt].do_rate()
+            nkeysl = len(self.msms[lagt].keys)
 
             # propagate rate matrix
-            pt = self.msms[lagt].propagateK(init=init)
+            pt = self.msms[lagt].propagateK(init=init, time=lagtimes_md)
             time = pt[0]
             ltime = len(time)
+
+            # keep only selected states
             pop = np.array(pt[1])
-            print time
-            print pop
-            print len(pop[:,1])
-            print len(pop[1,:])
-            sys.exit()
-            pMSM.append((time, np.sum(pop[:,x] for x in init_states)))
+            pop_relax = np.zeros(ltime)
+            for x in init:
+                ind = self.msms[lagt].keep_keys.index(x)
+                pop_relax += pop[:,ind]
+            pMSM.append((time, pop_relax))
 
         # calculate population from simulation data
         print "\n    Calculating populations from MD" 
         pMD = []
         epMD = []
-        logs = np.arange(1,4,0.25) 
-        lagtimes_md = 10**logs*self.dt
         for lagt in lagtimes_md:
             try:
                 num = np.sum([self.msms[lagt].count[j,i] for (j,i) in \
@@ -215,24 +227,6 @@ class MasterMSM(object):
             ax.set_xlabel(r'Time', fontsize=16)
             ax.set_ylabel(r'$\tau$', fontsize=16)
         plt.show()
-
-#    def do_pcca(self, lagt=10, N=2, optim=True):
-#        """ Do PCCA clustering
-#
-#        Parameters:
-#        -----------
-#        lagt : float
-#            The lag time.
-#
-#        N : int
-#            The number of clusters.
-#
-#        optim : bool
-#            Whether optimization of the clustering is desired.
-#
-#        """
-#
-#        return self.msms[lagt].pcca(lagt=lagt, N=N, optim=optim)
 
 class MSM(object):
     """
@@ -770,10 +764,8 @@ class MSM(object):
         pnorm : array
             Population of all states as a function of time - normalized.
         """
-        print " Propagating the dynamics of the MSM ..."
-
         # time for relaxation
-        if not time:
+        if type(time) == "NoneType":
             tmin = self.lagt
             tmax = 1e4*self.lagt
             logt = np.arange(np.log10(tmin), np.log10(tmax), 0.2)
