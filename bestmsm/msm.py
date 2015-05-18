@@ -82,22 +82,32 @@ class MasterMSM(object):
         self.msms[lagt].do_count(sliding=sliding)
         self.msms[lagt].do_trans()
 
-    def convergence_test(self, plot=True, N=1, sliding=True, error=True):
+    def convergence_test(self, plot=True, N=1, sliding=True, error=True, time=None):
         """ Carry out convergence test for relaxation times.
 
         Parameters:
         -----------
         plot : bool
             Whether the lag time dependence of the relaxation times should be plotted.
-        N: int
+        N : int
             The number of modes for which we are building the MSM.
+        sliding : bool
+            Whether a sliding window should be used or not.
+        error : bool
+            Whether to include errors or not.
+        time : array
+            The range of times that must be used.
 
         """
         print "\n Convergence test for the MSM: looking a implied timescales"
 
         # defining lag times to produce the MSM
-        #lagtimes = self.dt*np.array([1] + range(5,100,5))
-        lagtimes = self.dt*np.array([1] + range(50,210,25))
+        try:
+            assert(time is None)
+            lagtimes = self.dt*np.array([1] + range(50,210,25))
+        except:
+            print type(time)
+            lagtimes = np.array(time)
 
         # create MSMs at multiple lag times
         self.msms = {}
@@ -134,9 +144,10 @@ class MasterMSM(object):
                     ax.errorbar(lagtimes, data, yerr=ebar, fmt='o', label=n)
             ax.set_xlabel(r'Time', fontsize=16)
             ax.set_ylabel(r'$\tau$', fontsize=16)
+            ax.legend()
             plt.show()
 
-    def chapman_kolmogorov(self, init=None, sliding=True, error=True, plot=True):
+    def chapman_kolmogorov(self, init=None, sliding=True, error=True, plot=True, time=None):
         """ Carry out Chapman-Kolmogorov test.
 
         Parameters:
@@ -153,11 +164,16 @@ class MasterMSM(object):
         """
         print "\n Chapman - Kolmogorov test:"
         nkeys = len(self.keys)
+
         # defining lag times to produce the MSM
-        lagtimes = self.dt*np.array([1] + range(50,210,25))
+        try:
+            assert(time is None)
+            lagtimes = self.dt*np.array([1] + range(50,210,25))
+        except:
+            lagtimes = np.array(time)
         # defining lag times to propopagate  
-        logs = np.arange(1,4,0.25) 
-        lagtimes_md = 10**logs*self.dt
+        logs = np.linspace(np.log10(self.dt),np.log10(np.max(lagtimes)*5),20)
+        lagtimes_exp = 10**logs
 
         print "\n    Initial states",init
         init_states = [x for x in range(nkeys) if self.keys[x] in init]
@@ -175,7 +191,7 @@ class MasterMSM(object):
             nkeysl = len(self.msms[lagt].keys)
 
             # propagate rate matrix
-            pt = self.msms[lagt].propagateK(init=init, time=lagtimes_md)
+            pt = self.msms[lagt].propagateK(init=init, time=lagtimes_exp)
             time = pt[0]
             ltime = len(time)
 
@@ -189,6 +205,8 @@ class MasterMSM(object):
 
         # calculate population from simulation data
         print "\n    Calculating populations from MD" 
+        logs = np.linspace(np.log10(self.dt),np.log10(np.max(lagtimes)*5),10)
+        lagtimes_md = 10**logs
         pMD = []
         epMD = []
         for lagt in lagtimes_md:
@@ -202,7 +220,14 @@ class MasterMSM(object):
                         itertools.product(init_states,init_states)])
 
             den = np.sum([self.msms[lagt].count[:,i] for i in init_states])
-            pMD.append((lagt, float(num)/den))
+            try:
+                pMD.append((lagt, float(num)/den))
+            except ZeroDivisionError:
+                print " ZeroDivisionError: pMD.append((lagt, float(num)/den)) " 
+                print " lagt",lagt
+                print " num", num
+                print " den", den
+                sys.exit()
 
             if error:
                 num = pMD[-1][1]-pMD[-1][1]**2
@@ -226,6 +251,7 @@ class MasterMSM(object):
                 n +=1
             ax.set_xlabel(r'Time', fontsize=16)
             ax.set_ylabel(r'$\tau$', fontsize=16)
+            ax.legend()
         plt.show()
 
 class MSM(object):
