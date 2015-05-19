@@ -5,7 +5,7 @@ import networkx as nx
 import os, math, copy #,numarray,linalg
 import itertools,operator
 from scipy import linalg as scipyla
-#import multiprocessing as mp
+import multiprocessing as mp
 import cPickle
 
 # thermal energy (kJ/mol)
@@ -232,7 +232,6 @@ def run_commit(states, K, peq, FF, UU):
 def calc_count_worker(x):
     states = x[0]
     dt = x[1]
-    #print "# Process %s running on file %s"%(mp.current_process(), traj)
     keys = x[2]
     nkeys = len(keys)
     lagt = x[3]
@@ -269,8 +268,9 @@ def do_boots_worker(x):
         and the total number of transitions.
  
     """
-    filetmp, keys, lagt, ncount, slider = x
 
+    print "# Process %s running on input %s"%(mp.current_process(), x[0])
+    filetmp, keys, lagt, ncount, slider = x
     nkeys = len(keys)
     finp = open(filetmp, 'rb')
     trans = cPickle.load(finp)
@@ -315,7 +315,6 @@ def do_boots_worker(x):
     peqT_sum = reduce(lambda x,y: x + y, map(lambda x: rvecsT[x,ieqT],
              range(nkeep)))
     peqT = rvecsT[:,ieqT]/peqT_sum
-
     return tauT, peqT, keep_keys 
 
 def calc_trans(nkeep=None, keep_states=None, count=None):
