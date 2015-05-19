@@ -99,14 +99,13 @@ class MasterMSM(object):
             The range of times that must be used.
 
         """
-        print "\n Convergence test for the MSM: looking a implied timescales"
+        print "\n Convergence test for the MSM: looking at implied timescales"
 
         # defining lag times to produce the MSM
         try:
             assert(time is None)
-            lagtimes = self.dt*np.array([1] + range(50,210,25))
+            lagtimes = self.dt*np.array([1] + range(25,205,25))
         except:
-            print type(time)
             lagtimes = np.array(time)
 
         # create MSMs at multiple lag times
@@ -554,15 +553,15 @@ class MSM(object):
         cPickle.dump(trajs, file, protocol=cPickle.HIGHEST_PROTOCOL)
         file.close()
 
-        #print "     Number of trajectories: %g"%len(trajs)
-        #print "     Median of trajectory length: %g"%ltraj_median
+        print "     Number of trajectories: %g"%len(trajs)
+        print "     Median of trajectory length: %g"%ltraj_median
 
         # now do it
-        #print "     ...doing bootstrap analysis"
+        print "     ...doing bootstrap analysis"
         # multiprocessing options
         if not nproc:           
             nproc = mp.cpu_count()
-        #print "     ...running on %g processors"%nproc
+        print "     ...running on %g processors"%nproc
         pool = mp.Pool(processes=nproc)
 
         multi_boots_input = map(lambda x: [filetmp, self.keys, self.lagt, ncount, 
@@ -571,7 +570,6 @@ class MSM(object):
         result = pool.map(msm_lib.do_boots_worker, multi_boots_input)
         pool.close()
         pool.join()
-
         tauT_boots = [x[0] for x in result]
         peqT_boots = [x[1] for x in result]
         keep_keys_boots = [x[2] for x in result]
