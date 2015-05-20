@@ -8,7 +8,6 @@ git clone http://github.com/daviddesancho/bestmsm destination/bestmsm
 cd destination/bestmsm
 python setup.py install --user
 ```
-
 ### Parallel processing in Python and BestMSM
 In BestMSM we make ample use of the multiprocessing library, which for 
 MacOS X can conflict with non-Python libraries. This is a problem that
@@ -21,4 +20,3 @@ export VECLIB_MAXIMUM_THREADS=1
 ```
 
 This should be set in the terminal before you start your python session.
-
