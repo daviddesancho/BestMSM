@@ -788,13 +788,14 @@ class MSM(object):
         pnorm : array
             Population of all states as a function of time - normalized.
         """
-        # time for relaxation
-        if type(time) == "NoneType":
+        # defining times for relaxation 
+        try:
+            assert(time is None)
             tmin = self.lagt
             tmax = 1e4*self.lagt
             logt = np.arange(np.log10(tmin), np.log10(tmax), 0.2)
             time = 10**logt
-        else:
+        except:
             time = np.array(time)
         ltime = len(time)
 
