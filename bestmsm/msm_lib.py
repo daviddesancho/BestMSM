@@ -218,10 +218,17 @@ def run_commit(states, K, peq, FF, UU):
     for i in range(nstates):
         for j in range(nstates):
             J[j][i] = K[j][i]*peq[i]*(pfold[j]-pfold[i])
-            if j in FF: #  dividing line corresponds to I to F transitions
-                sum_flux += J[j][i]
 
-    print "   reactive flux: %g"%sum_flux
+    # experimenting with reactive flux
+    left = [x for x in range(nstates) if pfold[x] < 0.5]
+    right = [x for x in range(nstates) if pfold[x] > 0.5]
+    for i in left:
+        for j in right:
+            sum_flux += J[j][i]
+    #        if j in FF: #  dividing line corresponds to I to F transitions
+    #            sum_flux += J[j][i]
+
+    #print "   reactive flux: %g"%sum_flux
 #    pU = np.sum(peq[filter(lambda x: x in UU, range(nstates))])
     pU = np.sum(peq[filter(lambda x: x not in FF, range(len(states)))])
 #    pU = np.sum(peq[filter(lambda x: x in UU, range(len(states)))])
