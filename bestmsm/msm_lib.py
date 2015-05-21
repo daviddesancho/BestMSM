@@ -269,7 +269,7 @@ def do_boots_worker(x):
  
     """
 
-    print "# Process %s running on input %s"%(mp.current_process(), x[0])
+    #print "# Process %s running on input %s"%(mp.current_process(), x[0])
     filetmp, keys, lagt, ncount, slider = x
     nkeys = len(keys)
     finp = open(filetmp, 'rb')
