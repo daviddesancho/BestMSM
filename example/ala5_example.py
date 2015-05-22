@@ -205,8 +205,8 @@ msm_ala5.msms[50].do_rate()
 
 folded = [x for x in msm_ala5.keys if '1111' in x]
 unfolded = [x for x in msm_ala5.keys if '0000' in x]
-J, pfold, sumflux, kf = msm_ala5.msms[50].do_pfold(FF=folded,                                          UU=unfolded)
-print 'Folding time: %g'%(1./kf)
+msm_ala5.msms[50].do_pfold(FF=folded, UU=unfolded)
+print 'Folding time: %g'%(1./msm_ala5.msms[50].kf)
 
 
 # ###PCCA clustering

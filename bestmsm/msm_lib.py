@@ -213,17 +213,20 @@ def run_commit(states, K, peq, FF, UU):
         pss[i] = (1-pfold[i])*peq[i]
 
     # flux matrix and reactive flux
-    J = np.zeros([nstates,nstates],float)
-    sum_flux = 0
-    for i in range(nstates):
-        for j in range(nstates):
+    #J = np.zeros([nstates,nstates],float)
+    #sum_flux = 0
+    #for i in range(nstates):
+    #    for j in range(nstates):
             J[j][i] = K[j][i]*peq[i]*(pfold[j]-pfold[i])
 
     # experimenting with reactive flux
     left = [x for x in range(nstates) if pfold[x] < 0.5]
     right = [x for x in range(nstates) if pfold[x] > 0.5]
+    J = np.zeros([nstates,nstates], float)
+    sum_flux = 0
     for i in left:
         for j in right:
+            J[j][i] = K[j][i]*peq[i]*(pfold[j]-pfold[i])
             sum_flux += J[j][i]
     #        if j in FF: #  dividing line corresponds to I to F transitions
     #            sum_flux += J[j][i]
