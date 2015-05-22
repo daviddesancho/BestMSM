@@ -89,7 +89,3 @@ def plot_evals(vals, log=False):
     ax.set_xlabel(r'$Eigenvalue$')
     ax.set_ylabel(r'$\tau$')
     plt.show()
-
-
-
-

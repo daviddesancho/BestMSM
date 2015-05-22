@@ -700,17 +700,40 @@ class MSM(object):
             _UU = [self.keep_keys.index(UU)]
 
         # do the calculation
-        J, pfold, sum_flux, kf = msm_lib.run_commit(_states, \
+        self.J, self.pfold, self.sum_flux, self.kf = msm_lib.run_commit(_states, \
                 self.rate, self.peqK, _FF, _UU)
+#        # write graph in dot format
+#        if dot:
+#            D = nx.DiGraph(J)
+##            visual_lib.write_dot(D, nodeweight=self.peqT, edgeweight=self.trans, out="out.dot")
+#            visual_lib.write_dot(D, nodeweight=self.peqT, out="out.dot")
+##            visual_lib.write_dot(D, out="out.dot")
 
-        # write graph in dot format
-        if dot:
-            D = nx.DiGraph(J)
-#            visual_lib.write_dot(D, nodeweight=self.peqT, edgeweight=self.trans, out="out.dot")
-            visual_lib.write_dot(D, nodeweight=self.peqT, out="out.dot")
-#            visual_lib.write_dot(D, out="out.dot")
+    def do_dijkstra(self):
+""" Wrapper to calculate reactive fluxes and committors using the 
+        Berzhkovskii-Hummer-Szabo method, J Chem Phys (2009)
+        
+        Parameters
+        ----------
+        lagt : float
+            The lag time.
+        FF : list
+            Folded states.
+        UU : list
+            Unfolded states.
+        dot : string
+            Filename to output dot graph.
 
-        return J, pfold, sum_flux, kf
+        Returns
+        -------
+        J : array
+            The flux matrix.
+        pfold : list
+            The values of the committor.
+        kf : float
+            The foldign rate UU -> FF
+
+        """
 
     def sensitivity(self, FF=None, UU=None, dot=False):
         """ Sensitivity analysis of the states in the network.
