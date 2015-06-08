@@ -669,12 +669,23 @@ class MSM(object):
         
         Parameters
         ----------
+        lagt : float
+            The lag time.
         FF : list
             Folded states.
         UU : list
             Unfolded states.
         dot : string
             Filename to output dot graph.
+
+        Returns
+        -------
+        J : array
+            The flux matrix.
+        pfold : list
+            The values of the committor.
+        kf : float
+            The foldign rate UU -> FF
 
         """
         #print "\n Calculating commitment probabilities and fluxes..."
@@ -698,47 +709,31 @@ class MSM(object):
 #            visual_lib.write_dot(D, nodeweight=self.peqT, out="out.dot")
 ##            visual_lib.write_dot(D, out="out.dot")
 
-    def do_dijkstra(self, FF=None, UU=None, npaths=1):
-        """ Obtaining the maximum flux path wrapping NetworkX's Dikjstra algorithm.
+    def do_dijkstra(self):
+""" Wrapper to calculate reactive fluxes and committors using the 
+        Berzhkovskii-Hummer-Szabo method, J Chem Phys (2009)
         
         Parameters
         ----------
+        lagt : float
+            The lag time.
         FF : list
-            Folded states, currently limited to just one.
+            Folded states.
         UU : list
-            Unfolded states, currently limited to just one.
-        npaths : int
-            Number of paths to return.
+            Unfolded states.
+        dot : string
+            Filename to output dot graph.
+
+        Returns
+        -------
+        J : array
+            The flux matrix.
+        pfold : list
+            The values of the committor.
+        kf : float
+            The foldign rate UU -> FF
 
         """
-        # generate graph from flux matrix
-        self.do_pfold(FF=FF, UU=UU)
-        nkeys = len(self.keep_keys)
-        lnJ = np.zeros((nkeys, nkeys), float)
-        for i in range(nkeys):
-            for j in range(nkeys):
-                try:
-                    lnJ[i,j] = np.exp(np.log(self.J[j][i]))
-                except ValueError:
-                    pass
-        lnJ = nx.DiGraph(lnJ)
-        for i in lnJ.nodes():
-            lnJ.node[i]['key'] = self.keep_keys[i]
-
-        path = []
-        for  n in range(npaths):
-            try:
-                path.append(nx.dijkstra_path(lnJ, self.keep_keys.index(UU), self.keep_keys.index(FF)))
-                print " Shortest path"
-            except ValueError:
-                print " Something went wrong"
-            for l in range(len(path[-1]) - 1):
-                i = path[-1][l]
-                j = path[-1][l+1]
-                print i,j
-                lnJ[j][i]['weight'] = 0. 
-
-        return path
 
     def sensitivity(self, FF=None, UU=None, dot=False):
         """ Sensitivity analysis of the states in the network.
