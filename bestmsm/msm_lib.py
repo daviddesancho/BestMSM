@@ -214,24 +214,29 @@ def run_commit(states, K, peq, FF, UU):
 
     # flux matrix and reactive flux
     J = np.zeros([nstates,nstates],float)
-    sum_flux = 0
     for i in range(nstates):
         for j in range(nstates):
             J[j][i] = K[j][i]*peq[i]*(pfold[j]-pfold[i])
 
-    # experimenting with reactive flux
+    # dividing line is committor = 0.5 
+    sum_flux = 0
     left = [x for x in range(nstates) if pfold[x] < 0.5]
     right = [x for x in range(nstates) if pfold[x] > 0.5]
     for i in left:
         for j in right:
             sum_flux += J[j][i]
+
+    # dividing line is reaching end states 
+    #sum_flux = 0
+    #for i in range(32):
+    #    for j in range(32):
     #        if j in FF: #  dividing line corresponds to I to F transitions
     #            sum_flux += J[j][i]
-
     #print "   reactive flux: %g"%sum_flux
-#    pU = np.sum(peq[filter(lambda x: x in UU, range(nstates))])
-    pU = np.sum(peq[filter(lambda x: x not in FF, range(len(states)))])
-#    pU = np.sum(peq[filter(lambda x: x in UU, range(len(states)))])
+
+    #sum of populations for all reactant states
+    pU = np.sum(peq[x for x in range(nstates))) if pfold[x] < 0.5])
+#    pU = np.sum(peq[filter(lambda x: x in UU, range(nstates)))])
     kf = sum_flux/pU
 #    print "   binding rate: %g"%kf
     return J, pfold, sum_flux, kf
