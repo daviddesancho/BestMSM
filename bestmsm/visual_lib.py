@@ -1,5 +1,8 @@
+import sys
 import math
+import itertools
 import numpy as np
+import networkx as nx
 import matplotlib.pyplot as plt
 
 
@@ -24,17 +27,17 @@ def getridofticks():
     ax.get_yaxis().tick_left()
 
 
-def write_dot(D, nodeweight=None, edgeweight=None, out="out.dot"):
+def write_dot(J, nodeweight=None, rank=None, out="out.dot"):
     """ Function for printing a graph in dot format
     
     Parameters
     ----------
-    D : array
-        A directed graph.
+    J : array
+        A directed graph in the form of a matrix, with values corresponding to weights
     nodeweight : array
         Weights for the nodes.
-    edgeweight : array 
-        Weights for the edges.
+    rank : list, array
+        The rank order for display of nodes.
     out : string
         Filename for output.
     
@@ -42,8 +45,10 @@ def write_dot(D, nodeweight=None, edgeweight=None, out="out.dot"):
     print "\n Writing graph in dot format..."
     fout = open(out, "w")
     fout.write("strict digraph G {\n")
-    print D
+
+    D = nx.DiGraph(J.transpose())
     nd = len(D.nodes())
+
     # define weights of nodes
     try:        
         lw = np.log(nodeweight)
@@ -56,24 +61,30 @@ def write_dot(D, nodeweight=None, edgeweight=None, out="out.dot"):
     for n in D.nodes():
         fout.write("%i [shape=circle,width=%f];\n"%(n, weight[n]))
 
+    # define rank of nodes
+    elems = zip(*D.edges())[0] + zip(*D.edges())[1]
+    try:
+        for u,v in itertools.product(D.nodes(),D.nodes()):
+            if u  < v:
+                if u in elems and v in elems:
+                    if rank[u] == rank[v]:
+                        fout.write ("{rank=same; %i; %i;}\n"%(u,v))
+    except TypeError:
+        pass
+
     # define weights of edges
     weight = np.zeros((nd, nd), float)
     try:
-        lw = [np.log(x) for row in edgeweight for x in row if x > 0]
-        wmin = np.min(lw)
-        wmax = np.max(lw)
-        norm = wmax - wmin
+        wmin = np.min(J[J>0])
         for u, v in D.edges():
-            weight[u,v] = 2*((np.log(edgeweight[u,v]) - wmin)/norm + 0.5)
+            D[u][v]['weight'] = J[v,u]/wmin
     except TypeError:
-        weight = np.ones((nd, nd), float)
-#    #   if pfold[u] == pfold[v]:
-#    #       out.write ("{rank=same; %i; %i;}\n"%(u,v))
-#
+        for u, v in D.edges():
+            D[u][v]['weight'] = 1. 
 
-    for (u,v) in D.edges():
-        if u != v and not math.isnan(weight[u,v]):
-            fout.write("%i -> %i  [penwidth=%f,color=black];\n"%(u, v, weight[u,v]))
+    for u,v,d in D.edges_iter(data=True):
+        if u != v and not math.isnan(d['weight']):
+            fout.write("%i -> %i  [penwidth=%f,color=black];\n"%(u, v, np.log(d['weight'])+1))
 
     fout.write("}")
 

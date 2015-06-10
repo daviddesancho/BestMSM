@@ -699,7 +699,7 @@ class MSM(object):
 #            visual_lib.write_dot(D, nodeweight=self.peqT, out="out.dot")
 ##            visual_lib.write_dot(D, out="out.dot")
 
-    def do_dijkstra(self, FF=None, UU=None, npaths=1):
+    def do_dijkstra(self, FF=None, UU=None, cut=0.8, out="graph.dot"):
         """ Obtaining the maximum flux path wrapping NetworkX's Dikjstra algorithm.
         
         Parameters
@@ -708,8 +708,8 @@ class MSM(object):
             Folded states, currently limited to just one.
         UU : list
             Unfolded states, currently limited to just one.
-        npaths : int
-            Number of paths to return.
+        cut : float
+            Percentage of flux to account for.
 
         """
         nkeys = len(self.keep_keys)
@@ -726,13 +726,15 @@ class MSM(object):
             _UU = [self.keep_keys.index(UU)]
 
         # generate graph from flux matrix
-        Jnode, Jpath = gen_path_lengths(range(4), J, pfold, \
-                sum_flux, _FF, _UU])
+        Jnode, Jpath = msm_lib.gen_path_lengths(range(nkeys), J, pfold, \
+                flux, _FF, _UU)
         JpathG = nx.DiGraph(Jpath.transpose())
 
         # find shortest paths
+        Jcum = np.zeros((nkeys, nkeys), float)
+        cum_paths = []
         while True:
-            Jnode, Jpath = gen_path_lengths(range(4), J, pfold, \
+            Jnode, Jpath = msm_lib.gen_path_lengths(range(nkeys), J, pfold, \
                         flux, _FF, _UU)
             # generate nx graph from matrix
             JpathG = nx.DiGraph(Jpath.transpose())
@@ -741,36 +743,51 @@ class MSM(object):
             for (j,i) in itertools.product(_FF,_UU):
                 try:
                     path = nx.dijkstra_path(JpathG, i, j)
-                    pathlength = nx.dijkstra_path_length(JpathG, 0, 3)
-                    print " shortest path:", path, pathlength
+                    pathlength = nx.dijkstra_path_length(JpathG, i, j)
+                    #print " shortest path:", path, pathlength
                     paths.append(((j,i), path, pathlength))
                 except nx.NetworkXNoPath:
-                    print " No path for %g -> %g\n Stopping here"%(0, 3)
+                    #print " No path for %g -> %g\n Stopping here"%(i, j)
                     pass
 
             # sort maximum flux paths
-            shortest_path = sort(paths, key=itemgetter(2))[0]
+            try:
+                shortest_path = sorted(paths, key=itemgetter(2))[0]
+            except IndexError:
+                print " No paths"
+                break
     
             # calculate contribution to flux
             sp = shortest_path[1]
-            f = bhs.J[sp[1],sp[0]]
-            print "%2i -> %2i: %10.4e "%(sp[0], sp[1], J[sp[1],sp[0]])
+            f = J[sp[1],sp[0]]
+            #print "%2i -> %2i: %10.4e "%(sp[0], sp[1], J[sp[1],sp[0]])
             for j in range(2, len(sp)):
                 i = j - 1
-                print "%2i -> %2i: %10.4e %10.4e"%(sp[i], sp[j], \
-                    J[sp[j],sp[i]], \
-                    J[sp[j],sp[i]]/Jnode[sp[i]])
-                f *= bhs.J[sp[j],sp[i]]/Jnode[sp[i]]
+                #print "%2i -> %2i: %10.4e %10.4e"%(sp[i], sp[j], \
+                #    J[sp[j],sp[i]], \
+                #    J[sp[j],sp[i]]/Jnode[sp[i]])
+                f *= J[sp[j],sp[i]]/Jnode[sp[i]]
 
             # remove flux from edges
             for j in range(1,len(sp)):
                 i = j - 1
                 J[sp[j],sp[i]] -= f
-            flux -= f
-            print ' flux from path ', sp, ': %10.4e'%f
-            print ' leftover flux: %10.4e\n'%flux
-            break
 
+            # store flux in matrix
+            for j in range(1, len(sp)):
+                i = j - 1
+                Jcum[sp[j],sp[i]] += f
+            flux -= f
+            cum_paths.append((shortest_path, f))
+            print ' flux from path ', sp, ': %10.4e'%f
+            #print ' leftover flux: %10.4e\n'%flux
+            if flux/self.sum_flux < cut:
+                visual_lib.write_dot(Jcum, nodeweight=self.peqT, \
+                        rank=pfold, out=out)
+                return cum_paths
+                break
+
+        
     def sensitivity(self, FF=None, UU=None, dot=False):
         """ Sensitivity analysis of the states in the network.
         De Sancho, Kubas, Blumberger and Best (In preparation, 
