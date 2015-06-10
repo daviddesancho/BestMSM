@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import multiprocessing as mp
 import msm_lib
 import visual_lib
+from operator import itemgetter
 
 class MasterMSM(object):
     """
@@ -711,34 +712,64 @@ class MSM(object):
             Number of paths to return.
 
         """
-        # generate graph from flux matrix
-        self.do_pfold(FF=FF, UU=UU)
         nkeys = len(self.keep_keys)
-        lnJ = np.zeros((nkeys, nkeys), float)
-        for i in range(nkeys):
-            for j in range(nkeys):
+        pfold = self.pfold
+        J = self.J
+        flux = self.sum_flux
+        if isinstance(FF, list):
+            _FF = [self.keep_keys.index(x) for x in FF]
+        else:
+            _FF = [self.keep_keys.index(FF)]
+        if isinstance(UU, list):
+            _UU = [self.keep_keys.index(x) for x in UU]
+        else:
+            _UU = [self.keep_keys.index(UU)]
+
+        # generate graph from flux matrix
+        Jnode, Jpath = gen_path_lengths(range(4), J, pfold, \
+                sum_flux, _FF, _UU])
+        JpathG = nx.DiGraph(Jpath.transpose())
+
+        # find shortest paths
+        while True:
+            Jnode, Jpath = gen_path_lengths(range(4), J, pfold, \
+                        flux, _FF, _UU)
+            # generate nx graph from matrix
+            JpathG = nx.DiGraph(Jpath.transpose())
+            # find shortest path for sets of end states
+            paths = []
+            for (j,i) in itertools.product(_FF,_UU):
                 try:
-                    lnJ[i,j] = np.exp(np.log(self.J[j][i]))
-                except ValueError:
+                    path = nx.dijkstra_path(JpathG, i, j)
+                    pathlength = nx.dijkstra_path_length(JpathG, 0, 3)
+                    print " shortest path:", path, pathlength
+                    paths.append(((j,i), path, pathlength))
+                except nx.NetworkXNoPath:
+                    print " No path for %g -> %g\n Stopping here"%(0, 3)
                     pass
-        lnJ = nx.DiGraph(lnJ)
-        for i in lnJ.nodes():
-            lnJ.node[i]['key'] = self.keep_keys[i]
 
-        path = []
-        for  n in range(npaths):
-            try:
-                path.append(nx.dijkstra_path(lnJ, self.keep_keys.index(UU), self.keep_keys.index(FF)))
-                print " Shortest path"
-            except ValueError:
-                print " Something went wrong"
-            for l in range(len(path[-1]) - 1):
-                i = path[-1][l]
-                j = path[-1][l+1]
-                print i,j
-                lnJ[j][i]['weight'] = 0. 
+            # sort maximum flux paths
+            shortest_path = sort(paths, key=itemgetter(2))[0]
+    
+            # calculate contribution to flux
+            sp = shortest_path[1]
+            f = bhs.J[sp[1],sp[0]]
+            print "%2i -> %2i: %10.4e "%(sp[0], sp[1], J[sp[1],sp[0]])
+            for j in range(2, len(sp)):
+                i = j - 1
+                print "%2i -> %2i: %10.4e %10.4e"%(sp[i], sp[j], \
+                    J[sp[j],sp[i]], \
+                    J[sp[j],sp[i]]/Jnode[sp[i]])
+                f *= bhs.J[sp[j],sp[i]]/Jnode[sp[i]]
 
-        return path
+            # remove flux from edges
+            for j in range(1,len(sp)):
+                i = j - 1
+                J[sp[j],sp[i]] -= f
+            flux -= f
+            print ' flux from path ', sp, ': %10.4e'%f
+            print ' leftover flux: %10.4e\n'%flux
+            break
 
     def sensitivity(self, FF=None, UU=None, dot=False):
         """ Sensitivity analysis of the states in the network.

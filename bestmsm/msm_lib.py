@@ -235,7 +235,7 @@ def run_commit(states, K, peq, FF, UU):
     #print "   reactive flux: %g"%sum_flux
 
     #sum of populations for all reactant states
-    pU = np.sum(peq[x for x in range(nstates))) if pfold[x] < 0.5])
+    pU = np.sum([peq[x] for x in range(nstates) if pfold[x] < 0.5])
 #    pU = np.sum(peq[filter(lambda x: x in UU, range(nstates)))])
     kf = sum_flux/pU
 #    print "   binding rate: %g"%kf
@@ -464,3 +464,23 @@ def propagate_worker(x):
     popul = mat_mul_v(expkt, pini)
     return popul 
 
+def gen_path_lengths(keys, J, pfold, flux, FF, UU):
+    """ use BHS prescription for defining path lenghts """
+    nkeys = len(keys)
+    I = [x for x in range(nkeys) if x not in FF+UU]
+    Jnode = []
+    # calculate flux going through nodes
+    for i in range(nkeys):
+        Jnode.append(np.sum([J[i,x] for x in range(nkeys) \
+                             if pfold[x] < pfold[i]]))
+    # define matrix with edge lengths
+    Jpath = np.zeros((nkeys, nkeys), float)
+    for i in UU:
+        for j in I + FF:
+            if J[j,i] > 0:
+                Jpath[j,i] = np.log(flux/J[j,i])
+    for i in I:
+        for j in [x for x in FF+I if pfold[x] > pfold[i]]:
+            if J[j,i] > 0:
+                Jpath[j,i] = np.log(Jnode[j]/J[j,i])
+    return Jnode, Jpath
