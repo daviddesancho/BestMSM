@@ -52,17 +52,21 @@ def write_dot(J, nodeweight=None, rank=None, out="out.dot"):
     # define weights of nodes
     try:        
         lw = np.log(nodeweight)
-        wmin = np.min(lw)
-        wmax = np.max(lw)
-        norm = wmax - wmin
-        weight = [(x - wmin)/norm + 0.5 for x in lw]
+        #wmin = np.min(lw)
+        #wmax = np.max(lw)
+        #norm = wmax - wmin
+        #weight = [(x - wmin)/norm + 0.5 for x in lw]
+        weight = 0.2*(lw - np.min(lw) -np.max(lw))
     except AttributeError:
         weight = np.ones(nd)
+
+    elems = zip(*D.edges())[0] + zip(*D.edges())[1]
+    
     for n in D.nodes():
-        fout.write("%i [shape=circle,width=%f];\n"%(n, weight[n]))
+        if n in elems:
+            fout.write("%i [shape=circle,width=%f];\n"%(n, weight[n]))
 
     # define rank of nodes
-    elems = zip(*D.edges())[0] + zip(*D.edges())[1]
     try:
         for u,v in itertools.product(D.nodes(),D.nodes()):
             if u  < v:

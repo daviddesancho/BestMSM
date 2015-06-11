@@ -699,7 +699,7 @@ class MSM(object):
 #            visual_lib.write_dot(D, nodeweight=self.peqT, out="out.dot")
 ##            visual_lib.write_dot(D, out="out.dot")
 
-    def do_dijkstra(self, FF=None, UU=None, cut=0.8, out="graph.dot"):
+    def do_dijkstra(self, FF=None, UU=None, cut=None, npath=None, out="graph.dot"):
         """ Obtaining the maximum flux path wrapping NetworkX's Dikjstra algorithm.
         
         Parameters
@@ -733,7 +733,9 @@ class MSM(object):
         # find shortest paths
         Jcum = np.zeros((nkeys, nkeys), float)
         cum_paths = []
+        n = 0
         while True:
+            n +=1
             Jnode, Jpath = msm_lib.gen_path_lengths(range(nkeys), J, pfold, \
                         flux, _FF, _UU)
             # generate nx graph from matrix
@@ -772,6 +774,8 @@ class MSM(object):
             for j in range(1,len(sp)):
                 i = j - 1
                 J[sp[j],sp[i]] -= f
+                if J[sp[j],sp[i]] < 0:
+                    J[sp[j],sp[i]] = 0.
 
             # store flux in matrix
             for j in range(1, len(sp)):
@@ -779,13 +783,20 @@ class MSM(object):
                 Jcum[sp[j],sp[i]] += f
             flux -= f
             cum_paths.append((shortest_path, f))
-            print ' flux from path ', sp, ': %10.4e'%f
+            print ' flux from path ', sp, ': %10.4e'%(f/self.sum_flux)
             #print ' leftover flux: %10.4e\n'%flux
-            if flux/self.sum_flux < cut:
-                visual_lib.write_dot(Jcum, nodeweight=self.peqT, \
+            if cut is not None:
+                if flux/self.sum_flux < cut:
+                    visual_lib.write_dot(Jcum, nodeweight=self.peqT, \
+                            rank=pfold, out=out)
+                    return cum_paths
+                    break
+            if npath is not None:
+                if n == npath:
+                    visual_lib.write_dot(Jcum, nodeweight=self.peqT, \
                         rank=pfold, out=out)
-                return cum_paths
-                break
+                    return cum_paths
+                    break
 
         
     def sensitivity(self, FF=None, UU=None, dot=False):
