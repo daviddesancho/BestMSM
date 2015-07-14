@@ -31,11 +31,14 @@ class TimeSeries:
         Lapse between snapshots
 
     """
-    def __init__(self, filename=None, keys=None):
+    def __init__(self, filename=None, keys=None, dt=None):
         if filename:
             self.filename = filename
             self.time, self.states = self.read_traj()
-            self.dt = self.find_dt()
+            if not dt:
+                self.dt = self.find_dt()
+            else:
+                self.dt = dt
             if keys is None:
                 self.keys = self.find_keys()
             else:
