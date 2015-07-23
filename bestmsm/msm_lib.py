@@ -224,19 +224,20 @@ def run_commit(states, K, peq, FF, UU):
     right = [x for x in range(nstates) if pfold[x] > 0.5]
     for i in left:
         for j in right:
+            print "%i --> %i: %g"%(i, j, J[j][i])
             sum_flux += J[j][i]
 
     # dividing line is reaching end states 
     #sum_flux = 0
-    #for i in range(32):
-    #    for j in range(32):
+    #for i in range(nstates):
+    #    for j in range(nstates):
     #        if j in FF: #  dividing line corresponds to I to F transitions
     #            sum_flux += J[j][i]
     #print "   reactive flux: %g"%sum_flux
 
     #sum of populations for all reactant states
     pU = np.sum([peq[x] for x in range(nstates) if pfold[x] < 0.5])
-#    pU = np.sum(peq[filter(lambda x: x in UU, range(nstates)))])
+ #   pU = np.sum(peq[filter(lambda x: x in UU, range(nstates))])
     kf = sum_flux/pU
 #    print "   binding rate: %g"%kf
     return J, pfold, sum_flux, kf
@@ -478,9 +479,9 @@ def gen_path_lengths(keys, J, pfold, flux, FF, UU):
     for i in UU:
         for j in I + FF:
             if J[j,i] > 0:
-                Jpath[j,i] = np.log(flux/J[j,i])
+                Jpath[j,i] = np.log(flux/J[j,i]) + 1
     for i in I:
         for j in [x for x in FF+I if pfold[x] > pfold[i]]:
             if J[j,i] > 0:
-                Jpath[j,i] = np.log(Jnode[j]/J[j,i])
+                Jpath[j,i] = np.log(Jnode[j]/J[j,i]) + 1e-99
     return Jnode, Jpath

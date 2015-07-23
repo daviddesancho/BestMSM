@@ -1,5 +1,6 @@
 import os
 import sys
+import copy
 import tempfile
 import cPickle
 import itertools
@@ -83,7 +84,7 @@ class MasterMSM(object):
         self.msms[lagt].do_count(sliding=sliding)
         self.msms[lagt].do_trans()
 
-    def convergence_test(self, plot=True, N=1, sliding=True, error=True, time=None):
+    def convergence_test(self, plot=True, save=None, N=1, sliding=True, error=True, time=None):
         """ Carry out convergence test for relaxation times.
 
         Parameters:
@@ -98,6 +99,8 @@ class MasterMSM(object):
             Whether to include errors or not.
         time : array
             The range of times that must be used.
+        save : bool, str
+            Whether we want to save to file.
 
         """
         print "\n Convergence test for the MSM: looking at implied timescales"
@@ -105,7 +108,7 @@ class MasterMSM(object):
         # defining lag times to produce the MSM
         try:
             assert(time is None)
-            lagtimes = self.dt*np.array([1] + range(25,205,25))
+            lagtimes = self.dt*np.array([1] + range(10,100,10))
         except:
             lagtimes = np.array(time)
 
@@ -142,6 +145,22 @@ class MasterMSM(object):
                 else:
                     ebar = [self.msms[x].tau_std[n] for x in lagtimes]
                     ax.errorbar(lagtimes, data, yerr=ebar, fmt='o', label=n)
+            ax.set_xlabel(r'Time', fontsize=16)
+            ax.set_ylabel(r'$\tau$', fontsize=16)
+            ax.legend()
+            if save is not None:
+                print save
+                plt.savefig(save, bbox_inches='tight')
+
+            fig, ax = plt.subplots(facecolor='white')
+            for n in range(N):
+                data = [self.msms[x].tauT[n] for x in lagtimes]
+                if not error:
+                    ax.plot(lagtimes, data, 'o-', label=n)
+                else:
+                    ebar = [self.msms[x].tau_std[n] for x in lagtimes]
+                    ax.errorbar(lagtimes, data, yerr=ebar, fmt='o', label=n)
+            ax.set_xscale('log')
             ax.set_xlabel(r'Time', fontsize=16)
             ax.set_ylabel(r'$\tau$', fontsize=16)
             ax.legend()
@@ -280,7 +299,7 @@ class MSM(object):
         Names of states after removing not strongly connected sets.
 
     """
-    def __init__(self, data, keys=None, lagt=None):
+    def __init__(self, data=None, keys=None, lagt=None):
         # merge state keys from all trajectories
         self.keys = keys
         self.data = data
@@ -517,21 +536,21 @@ class MSM(object):
             Errors for the equilibrium probabilities
 
         """
-        #print "\n Doing bootstrap tests:"
+        print "\n Doing bootstrap tests:"
         # how much data is here?
         # generate trajectory list for easy handling 
         trajs = [[x.states, x.dt] for x in self.data]
         ltraj = [len(x[0])*x[1] for x in trajs]
         timetot = np.sum(ltraj) # total simulation time
         ncount = np.sum(self.count)
-        #print "     Total time: %g"%timetot
-        #print "     Number of trajectories: %g"%len(trajs)
-        #print "     Total number of transitions: %g"%ncount
+        print "     Total time: %g"%timetot
+        print "     Number of trajectories: %g"%len(trajs)
+        print "     Total number of transitions: %g"%ncount
 
         # how many resamples?
         if not nboots:
             nboots = 100
-        #print "     Number of resamples: %g"%nboots
+        print "     Number of resamples: %g"%nboots
 
         # how many trajectory fragments?
         ltraj_median = np.median(ltraj)
@@ -554,8 +573,8 @@ class MSM(object):
         cPickle.dump(trajs, file, protocol=cPickle.HIGHEST_PROTOCOL)
         file.close()
 
-        print "     Number of trajectories: %g"%len(trajs)
-        print "     Median of trajectory length: %g"%ltraj_median
+       # print "     Number of trajectories: %g"%len(trajs)
+       # print "     Median of trajectory length: %g"%ltraj_median
 
         # now do it
         print "     ...doing bootstrap analysis"
@@ -617,12 +636,12 @@ class MSM(object):
                 ax.hist(peq_keep[n], bins=binning)
             ax.set_xlabel(r'$P_{eq}$')
 
-            ax = fig.add_subplot(2,1,2)
-            binning = np.arange(np.log10(np.min(tau_ave)) - 1,np.log10(np.max(tau_ave)) + 1 , 0.05)
-            for n in range(10):
-                ax.hist(np.log10(tau_keep[n]), bins=binning)
-            ax.set_xlabel(r'$\tau$')
-            plt.show()
+       #     ax = fig.add_subplot(2,1,2)
+       #     binning = np.arange(np.log10(np.min(tau_ave)) - 1,np.log10(np.max(tau_ave)) + 1 , 0.05)
+       #     for n in range(10):
+       #         ax.hist(np.log10(tau_keep[n]), bins=binning)
+       #     ax.set_xlabel(r'$\tau$')
+       #     plt.show()
 
         return tau_ave, tau_std, peq_ave, peq_std
 
@@ -699,6 +718,61 @@ class MSM(object):
 #            visual_lib.write_dot(D, nodeweight=self.peqT, out="out.dot")
 ##            visual_lib.write_dot(D, out="out.dot")
 
+    def all_paths(self, FF=None, UU=None):
+        """ Enumerate all paths in network.
+        
+        Parameters
+        ----------
+        FF : list
+            Folded states, currently limited to just one.
+        UU : list
+            Unfolded states, currently limited to just one.
+
+        """
+        nkeys = len(self.keep_keys)
+        pfold = self.pfold
+        J = self.J
+        print J
+        flux = self.sum_flux
+
+        print "\n Enumerating all paths :\n"
+        print "          Total flux", flux
+        if isinstance(FF, list):
+            _FF = [self.keep_keys.index(x) for x in FF]
+        else:
+            _FF = [self.keep_keys.index(FF)]
+        if isinstance(UU, list):
+            _UU = [self.keep_keys.index(x) for x in UU]
+        else:
+            _UU = [self.keep_keys.index(UU)]
+
+        # generate graph from flux matrix
+        Jnode, Jpath = msm_lib.gen_path_lengths(range(nkeys), J, pfold, \
+                flux, _FF, _UU)
+        JpathG = nx.DiGraph(Jpath.transpose())
+
+        # enumerate paths
+        tot_flux = 0
+        paths = []
+        for (j,i) in itertools.product(_FF,_UU):
+            try:
+                for path in nx.all_simple_paths(JpathG, i, j):
+                    print " Path :",path
+                    f = J[path[1],path[0]]
+                    print " %2i -> %2i: %10.4e "%(path[0], path[1], J[path[1],path[0]])
+                    for i in range(2, len(path)):
+                        print " %2i -> %2i: %10.4e %10.4e"%\
+                                (path[i-1], path[i], J[path[i],path[i-1]], Jnode[path[i-1]])
+                        f *= J[path[i],path[i-1]]/Jnode[path[i-1]]
+                    tot_flux +=f
+                    print "  J(path) = %10.4e, %10.4e"%(f,tot_flux)
+                print
+            except nx.NetworkXNoPath:
+                #print " No path for %g -> %g\n Stopping here"%(i, j)
+                pass
+            
+        print " Commulative flux: %10.4e"%tot_flux
+
     def do_dijkstra(self, FF=None, UU=None, cut=None, npath=None, out="graph.dot"):
         """ Obtaining the maximum flux path wrapping NetworkX's Dikjstra algorithm.
         
@@ -714,8 +788,11 @@ class MSM(object):
         """
         nkeys = len(self.keep_keys)
         pfold = self.pfold
-        J = self.J
+        J = copy.deepcopy(self.J)
+        print J
         flux = self.sum_flux
+        print "\n Finding shortest path :\n"
+        print "      Total flux", flux
         if isinstance(FF, list):
             _FF = [self.keep_keys.index(x) for x in FF]
         else:
@@ -728,12 +805,14 @@ class MSM(object):
         # generate graph from flux matrix
         Jnode, Jpath = msm_lib.gen_path_lengths(range(nkeys), J, pfold, \
                 flux, _FF, _UU)
+        Jnode_init = Jnode
         JpathG = nx.DiGraph(Jpath.transpose())
-
+        
         # find shortest paths
         Jcum = np.zeros((nkeys, nkeys), float)
         cum_paths = []
         n = 0
+        tot_flux = 0
         while True:
             n +=1
             Jnode, Jpath = msm_lib.gen_path_lengths(range(nkeys), J, pfold, \
@@ -751,52 +830,62 @@ class MSM(object):
                 except nx.NetworkXNoPath:
                     #print " No path for %g -> %g\n Stopping here"%(i, j)
                     pass
-
+    
             # sort maximum flux paths
             try:
                 shortest_path = sorted(paths, key=itemgetter(2))[0]
             except IndexError:
                 print " No paths"
                 break
-    
+        
             # calculate contribution to flux
             sp = shortest_path[1]
-            f = J[sp[1],sp[0]]
-            #print "%2i -> %2i: %10.4e "%(sp[0], sp[1], J[sp[1],sp[0]])
+            f = self.J[sp[1],sp[0]]
+            path_fluxes = [f]
+            print ' Path :', sp
+            print "%2i -> %2i: %10.4e "%(sp[0], sp[1], self.J[sp[1],sp[0]])
             for j in range(2, len(sp)):
                 i = j - 1
-                #print "%2i -> %2i: %10.4e %10.4e"%(sp[i], sp[j], \
-                #    J[sp[j],sp[i]], \
-                #    J[sp[j],sp[i]]/Jnode[sp[i]])
-                f *= J[sp[j],sp[i]]/Jnode[sp[i]]
-
+                print "%2i -> %2i: %10.4e %10.4e"%(sp[i], sp[j], \
+                    self.J[sp[j],sp[i]], Jnode_init[sp[i]])
+                f *= self.J[sp[j],sp[i]]/Jnode_init[sp[i]]
+                path_fluxes.append(J[sp[j],sp[i]])
+    
+            # find bottleneck
+            ib = np.argmin(path_fluxes)
+    
             # remove flux from edges
             for j in range(1,len(sp)):
                 i = j - 1
                 J[sp[j],sp[i]] -= f
                 if J[sp[j],sp[i]] < 0:
                     J[sp[j],sp[i]] = 0.
+            J[sp[ib+1],sp[ib]] = 0. # bottleneck leftover flux = 0.
 
             # store flux in matrix
             for j in range(1, len(sp)):
                 i = j - 1
                 Jcum[sp[j],sp[i]] += f
+
             flux -= f
+            tot_flux +=f
             cum_paths.append((shortest_path, f))
-            print ' flux from path ', sp, ': %10.4e'%(f/self.sum_flux)
+            print '   flux: %4.2e; ratio: %4.2e; leftover: %4.2e'%(f, f/self.sum_flux,flux/self.sum_flux)
             #print ' leftover flux: %10.4e\n'%flux
             if cut is not None:
                 if flux/self.sum_flux < cut:
-                    visual_lib.write_dot(Jcum, nodeweight=self.peqT, \
-                            rank=pfold, out=out)
-                    return cum_paths
                     break
+    
             if npath is not None:
                 if n == npath:
-                    visual_lib.write_dot(Jcum, nodeweight=self.peqT, \
-                        rank=pfold, out=out)
-                    return cum_paths
                     break
+    
+        print "\n Commulative flux: %10.4e"%tot_flux
+        print " Fraction: %10.4e"%(tot_flux/self.sum_flux)
+#        visual_lib.write_dot(Jcum, nodeweight=self.peqK, \
+#                        rank=pfold, out=out)
+    
+        return cum_paths
 
         
     def sensitivity(self, FF=None, UU=None, dot=False):
@@ -885,18 +974,22 @@ class MSM(object):
         except:
             time = np.array(time)
         ltime = len(time)
-
+        print time
+        print ltime
         nkeep = len(self.keep_states)
         if p0 is not None:
             try:
-                #print "   reading initial population from file: %s"%p0
-                pini = [float(y) for y in \
-                        filter(lambda x: x.split()[0] not in ["#","@"],
-                        open(p0, "r").readlines())]
+                pini = np.array(p0)
             except TypeError:
-                #print "    p0 is not file"
-                #print "    exiting here"
-                return
+                try:
+                #print "   reading initial population from file: %s"%p0
+                    pini = [float(y) for y in \
+                    filter(lambda x: x.split()[0] not in ["#","@"],
+                            open(p0, "r").readlines())]
+                except TypeError:
+                    print "    p0 is not file"
+                    print "    exiting here"
+                    return
         elif init is not None:
             #print "    initializing all population in states"
             #print init
