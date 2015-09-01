@@ -224,7 +224,7 @@ def run_commit(states, K, peq, FF, UU):
     right = [x for x in range(nstates) if pfold[x] > 0.5]
     for i in left:
         for j in right:
-            print "%i --> %i: %g"%(i, j, J[j][i])
+            print "%i --> %i: %10.4e"%(i, j, J[j][i])
             sum_flux += J[j][i]
 
     # dividing line is reaching end states 

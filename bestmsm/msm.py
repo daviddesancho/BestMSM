@@ -1,6 +1,7 @@
 import os
 import sys
 import copy
+import operator
 import tempfile
 import cPickle
 import itertools
@@ -516,7 +517,7 @@ class MSM(object):
                 lvecsT_sorted[:,i] = lvecsT[:,iiT]
             return tauT, peqT, rvecsT_sorted, lvecsT_sorted
 
-    def boots(self, nboots=None, nproc=None, plot=False, slider=False):
+    def boots(self, nboots=100, nproc=None, plot=False, slider=False):
         """ Bootstrap the simulation data to calculate errors
 
         Parameters:
@@ -548,8 +549,6 @@ class MSM(object):
         print "     Total number of transitions: %g"%ncount
 
         # how many resamples?
-        if not nboots:
-            nboots = 100
         print "     Number of resamples: %g"%nboots
 
         # how many trajectory fragments?
@@ -574,7 +573,7 @@ class MSM(object):
         file.close()
 
        # print "     Number of trajectories: %g"%len(trajs)
-       # print "     Median of trajectory length: %g"%ltraj_median
+        print "     Median of trajectory length: %g"%ltraj_median
 
         # now do it
         print "     ...doing bootstrap analysis"
@@ -718,7 +717,7 @@ class MSM(object):
 #            visual_lib.write_dot(D, nodeweight=self.peqT, out="out.dot")
 ##            visual_lib.write_dot(D, out="out.dot")
 
-    def all_paths(self, FF=None, UU=None):
+    def all_paths(self, FF=None, UU=None, out="graph.dot", cut=1):
         """ Enumerate all paths in network.
         
         Parameters
@@ -753,7 +752,10 @@ class MSM(object):
 
         # enumerate paths
         tot_flux = 0
-        paths = []
+        paths = []        
+        Jcum = np.zeros((nkeys, nkeys), float)
+        paths_cum = {}
+        p = 0
         for (j,i) in itertools.product(_FF,_UU):
             try:
                 for path in nx.all_simple_paths(JpathG, i, j):
@@ -766,12 +768,36 @@ class MSM(object):
                         f *= J[path[i],path[i-1]]/Jnode[path[i-1]]
                     tot_flux +=f
                     print "  J(path) = %10.4e, %10.4e"%(f,tot_flux)
-                print
+                    paths_cum[p] = {}
+                    paths_cum[p]['path'] = path
+                    paths_cum[p]['flux'] = f
+                    p +=1
+
             except nx.NetworkXNoPath:
                 #print " No path for %g -> %g\n Stopping here"%(i, j)
                 pass
-            
+                     # store flux in matrix
+
         print " Commulative flux: %10.4e"%tot_flux
+
+        # sort paths based on flux
+        sorted_paths = sorted(paths_cum.items(), key=operator.itemgetter(1))
+        sorted_paths.reverse()
+   
+        # print paths up to a flux threshold
+        cum = 0
+        for k,v in sorted_paths:
+            path = v['path']
+            f = v['flux']
+            cum += f
+            for j in range(1, len(path)):
+                i = j - 1
+                Jcum[path[j],path[i]] += f
+            if cum/tot_flux > cut:
+                break
+        print Jcum
+        visual_lib.write_dot(Jcum, nodeweight=self.peqK, \
+                        rank=pfold, out=out)
 
     def do_dijkstra(self, FF=None, UU=None, cut=None, npath=None, out="graph.dot"):
         """ Obtaining the maximum flux path wrapping NetworkX's Dikjstra algorithm.
