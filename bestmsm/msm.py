@@ -85,7 +85,7 @@ class MasterMSM(object):
         self.msms[lagt].do_count(sliding=sliding)
         self.msms[lagt].do_trans()
 
-    def convergence_test(self, plot=True, save=None, N=1, sliding=True, error=True, time=None):
+    def convergence_test(self, plot=True, save=None, N=1, sliding=True, error=True, time=None, out=None):
         """ Carry out convergence test for relaxation times.
 
         Parameters:
@@ -124,14 +124,14 @@ class MasterMSM(object):
                 #print "\n    Count matrix:\n", self.msms[lagt].count
                 #print "\n    Transition matrix:\n", self.msms[lagt].trans
                 if error:               
-                    tau_ave, tau_std, peq_ave, peq_std = self.msms[lagt].boots(nboots=48)
+                    tau_ave, tau_std, peq_ave, peq_std = self.msms[lagt].boots(nboots=50)
                     self.msms[lagt].tau_std = tau_std
                     self.msms[lagt].tau_ave = tau_ave
                     self.msms[lagt].peq_std = peq_std
                     self.msms[lagt].peq_ave = peq_std
             else: 
                 if not hasattr(self.msms[lagt].tau_ave) and error:
-                    tau_ave, tau_std, peq_ave, peq_std = self.msms[lagt].boots(nboots=48)
+                    tau_ave, tau_std, peq_ave, peq_std = self.msms[lagt].boots(nboots=50)
                     self.msms[lagt].tau_std = tau_std
                     self.msms[lagt].tau_ave = tau_ave
                     self.msms[lagt].peq_std = peq_std
@@ -149,9 +149,8 @@ class MasterMSM(object):
             ax.set_xlabel(r'Time', fontsize=16)
             ax.set_ylabel(r'$\tau$', fontsize=16)
             ax.legend()
-            if save is not None:
-                print save
-                plt.savefig(save, bbox_inches='tight')
+            if out is not None:
+                plt.savefig(out, dpi=300, format='png')
 
             fig, ax = plt.subplots(facecolor='white')
             for n in range(N):
@@ -167,7 +166,7 @@ class MasterMSM(object):
             ax.legend()
             plt.show()
 
-    def chapman_kolmogorov(self, init=None, sliding=True, error=True, plot=True, time=None):
+    def chapman_kolmogorov(self, init=None, sliding=True, error=True, plot=True, out=None, time=None):
         """ Carry out Chapman-Kolmogorov test.
 
         Parameters:
@@ -182,7 +181,7 @@ class MasterMSM(object):
             Whether the result should be plotted.
 
         """
-        print "\n Chapman - Kolmogorov test:"
+        #print "\n Chapman - Kolmogorov test:"
         nkeys = len(self.keys)
 
         # defining lag times to produce the MSM
@@ -195,11 +194,11 @@ class MasterMSM(object):
         logs = np.linspace(np.log10(self.dt),np.log10(np.max(lagtimes)*5),20)
         lagtimes_exp = 10**logs
 
-        print "\n    Initial states",init
+        #print "\n    Initial states",init
         init_states = [x for x in range(nkeys) if self.keys[x] in init]
 
         # create MSMs at multiple lag times
-        print "\n    Calculating relaxation from MSM" 
+        #print "\n    Calculating relaxation from MSM" 
         self.msms = {}
         pMSM = []
         for lagt in lagtimes:
@@ -258,7 +257,7 @@ class MasterMSM(object):
 
         # plotting
         if plot:
-            fig, ax = plt.subplots(facecolor='white')
+            fig, ax = plt.subplots(facecolor='white', dpi=300)
             # plot MD probabilities first
             if not error:
                 ax.plot(pMD[:,0],pMD[:,1],'o')
@@ -270,9 +269,12 @@ class MasterMSM(object):
                 ax.plot(pM[0], pM[1], label=lagtimes[n])
                 n +=1
             ax.set_xlabel(r'Time', fontsize=16)
-            ax.set_ylabel(r'$\tau$', fontsize=16)
+            ax.set_ylabel(r'P(t)', fontsize=16)
             ax.legend()
-        plt.show()
+            if out is not None:
+                plt.savefig(out, dpi=300, format='png')
+            plt.show()
+
 
 class MSM(object):
     """
@@ -356,7 +358,7 @@ class MSM(object):
                 #print "\n    ...running on %g processors"%nproc
         pool = mp.Pool(processes=nproc)
         # generate multiprocessing input
-        mpinput = map(lambda x: [x.states, x.dt, self.keys, self.lagt, sliding], self.data)
+        mpinput = map(lambda x: [x.states, x.dt, self.keys, self.lagt, sliding, x.filename], self.data)
         # run counting using multiprocessing
         result = pool.map(msm_lib.calc_count_worker, mpinput)
         pool.close()
@@ -402,8 +404,8 @@ class MSM(object):
         #print "\n    ...checking connectivity:"
         #print self.count
         D = nx.DiGraph(self.count)
-        keep_states = sorted(list(nx.strongly_connected_components(D)), 
-                key = len, reverse=True)[0]
+        keep_states = list(sorted(list(nx.strongly_connected_components(D)), 
+                key = len, reverse=True)[0])
         keep_states.sort()
         #keep_states = sorted(nx.strongly_connected_components(D)[0])
         keep_keys = map(lambda x: self.keys[x], keep_states)
@@ -517,7 +519,7 @@ class MSM(object):
                 lvecsT_sorted[:,i] = lvecsT[:,iiT]
             return tauT, peqT, rvecsT_sorted, lvecsT_sorted
 
-    def boots(self, nboots=100, nproc=None, plot=False, slider=False):
+    def boots(self, nboots=50, nproc=None, plot=False, slider=False):
         """ Bootstrap the simulation data to calculate errors
 
         Parameters:
@@ -731,7 +733,6 @@ class MSM(object):
         nkeys = len(self.keep_keys)
         pfold = self.pfold
         J = self.J
-        print J
         flux = self.sum_flux
 
         print "\n Enumerating all paths :\n"
@@ -761,13 +762,13 @@ class MSM(object):
                 for path in nx.all_simple_paths(JpathG, i, j):
                     print " Path :",path
                     f = J[path[1],path[0]]
-                    print " %2i -> %2i: %10.4e "%(path[0], path[1], J[path[1],path[0]])
+                    #print " %2i -> %2i: %10.4e "%(path[0], path[1], J[path[1],path[0]])
                     for i in range(2, len(path)):
-                        print " %2i -> %2i: %10.4e %10.4e"%\
-                                (path[i-1], path[i], J[path[i],path[i-1]], Jnode[path[i-1]])
+                        #print " %2i -> %2i: %10.4e %10.4e"%\
+                        #        (path[i-1], path[i], J[path[i],path[i-1]], Jnode[path[i-1]])
                         f *= J[path[i],path[i-1]]/Jnode[path[i-1]]
                     tot_flux +=f
-                    print "  J(path) = %10.4e, %10.4e"%(f,tot_flux)
+                    #print "  J(path) = %10.4e, %10.4e"%(f,tot_flux)
                     paths_cum[p] = {}
                     paths_cum[p]['path'] = path
                     paths_cum[p]['flux'] = f
@@ -792,7 +793,7 @@ class MSM(object):
             cum += f
             for j in range(1, len(path)):
                 i = j - 1
-                Jcum[path[j],path[i]] += f
+                Jcum[path[j],path[i]] = J[path[j],path[i]] 
             if cum/tot_flux > cut:
                 break
         print Jcum
@@ -942,8 +943,9 @@ class MSM(object):
         K = self.rate
         peqK = self.peqK
 
-        # calculate pfold 
-        J, pfold, sum_flux, kon = self.do_pfold(FF=FF, UU=UU)
+        # calculate pfold
+        self.do_pfold(FF=FF, UU=UU)
+        J, pfold, sum_flux, kon = self.J, self.pfold, self.sum_flux, self.kf
 
         # 
         if isinstance(FF, list):
@@ -1000,8 +1002,6 @@ class MSM(object):
         except:
             time = np.array(time)
         ltime = len(time)
-        print time
-        print ltime
         nkeep = len(self.keep_states)
         if p0 is not None:
             try:

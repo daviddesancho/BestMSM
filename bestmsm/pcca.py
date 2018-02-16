@@ -25,6 +25,7 @@ class PCCA(MSM):
     def __init__(self, parent, N=2, method="robust"):
         self.parent = parent
         self.N = N
+        self.keep_keys = range(N)
         self.macros = self.eigen_group(N=self.N, method=method)
 
     def eigen_group(self, N=2, method="robust"):
@@ -45,7 +46,10 @@ class PCCA(MSM):
         """
 
         # generate eigenvectors in case the MSM does not have them
-        if not hasattr(self.parent, 'lvecsT'):
+        if not hasattr(self.parent, 'lvecsT') and hasattr(self.parent, 'lvecsK'):
+            tauT, peqT, self.parent.rvecsT, self.parent.lvecsT = \
+                self.parent.tauK, self.parent.peqK, self.parent.rvecsK, self.parent.lvecsK
+        elif not hasattr(self.parent, 'lvecsT'):
             tauT, peqT, self.parent.rvecsT, self.parent.lvecsT = \
                    self.parent.calc_eigsT(evecs=True)
         lvecs = self.parent.lvecsT
